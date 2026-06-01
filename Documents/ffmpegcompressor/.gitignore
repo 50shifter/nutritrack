@@ -1,7 +1,5 @@
-# FFmpeg binaries (very large)
-ffmpeg*/
-*.exe
-bin/
+# FFmpeg binaries (very large) - install via install_ffmpeg.ps1
+ffmpeg/
 
 # Python cache
 __pycache__/

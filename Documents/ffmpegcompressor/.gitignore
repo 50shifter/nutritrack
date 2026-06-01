@@ -1,0 +1,22 @@
+# FFmpeg binaries (very large)
+ffmpeg*/
+*.exe
+bin/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

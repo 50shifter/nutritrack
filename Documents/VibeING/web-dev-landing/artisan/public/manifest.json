@@ -1,0 +1,12 @@
+{
+  "name": "Artisan — Фотограф Москва",
+  "short_name": "Artisan",
+  "description": "Портфолио фотографа Артёма Волкова",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0A0A",
+  "theme_color": "#C9A96E",
+  "icons": [
+    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" }
+  ]
+}

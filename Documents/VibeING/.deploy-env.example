@@ -1,0 +1,6 @@
+# Server configuration (do NOT commit this file!)
+# Load via: .deploy-env (sourced in deploy.sh)
+
+export DEPLOY_SERVER_IP="155.212.231.220"
+export DEPLOY_SSH_USER="root"
+export DEPLOY_SSH_KEY="~/.ssh/id_ed25519_155.212.231.220"

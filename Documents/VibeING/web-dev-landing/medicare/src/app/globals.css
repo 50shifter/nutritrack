@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --color-medical: #0891B2;
+  --color-medical-light: #22D3EE;
+  --color-medical-muted: rgba(8, 145, 178, 0.1);
+  --color-white-900: #FAFBFC;
+  --color-white-800: #F1F5F9;
+  --color-white-700: #E2E8F0;
+  --color-dark: #1E293B;
+  --color-text: #475569;
+}
+
+body {
+  background: #FAFBFC;
+  color: #475569;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #E2E8F0; }
+::-webkit-scrollbar-thumb { background: #94A3B8; border-radius: 3px; }
+
+/* Page transitions */
+.page-enter {
+  animation: pageIn 0.4s ease-out;
+}
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Counter animation */
+.counter { font-variant-numeric: tabular-nums; }
+
+/* Pulse ring */
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(8, 145, 178, 0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(8, 145, 178, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(8, 145, 178, 0); }
+}
+.pulse-ring { animation: pulse-ring 2s infinite; }
+
+/* Doctor card hover */
+.doctor-card {
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.doctor-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(8, 145, 178, 0.12);
+}
+
+/* Accordion */
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.accordion-content.open {
+  max-height: 500px;
+}

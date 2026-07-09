@@ -1,0 +1,202 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  phone         String?
+  dob           String?
+  insurance     String?
+  role          Role     @default(PATIENT)
+
+  appointments  Appointment[]
+  medicalRecords MedicalRecord[]
+  prescriptions Prescription[]
+
+  @@map("users")
+}
+
+model Doctor {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  email         String?  @unique
+  specialty     String
+  image         String?
+  bio           String?
+  experience    Int      @default(0)
+  rating        Float    @default(0)
+  patients      Int      @default(0)
+  available     Boolean  @default(true)
+  education     String[]
+  certifications String[]
+
+  schedule      Schedule?
+
+  appointments  Appointment[]
+  medicalRecords MedicalRecord[]
+  prescriptions Prescription[]
+
+  @@map("doctors")
+}
+
+model Schedule {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  doctorId         String   @unique
+  doctor           Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  mondayStart      String?
+  mondayEnd        String?
+  tuesdayStart     String?
+  tuesdayEnd       String?
+  wednesdayStart   String?
+  wednesdayEnd     String?
+  thursdayStart    String?
+  thursdayEnd      String?
+  fridayStart      String?
+  fridayEnd        String?
+  saturdayStart    String?
+  saturdayEnd      String?
+  sunday           String   @default("closed")
+
+  @@map("schedules")
+}
+
+model Appointment {
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doctorId      String
+  doctor        Doctor     @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  date          DateTime
+  timeSlot      String
+  status        Status     @default(PENDING)
+  type          Type       @default(CONSULTATION)
+  notes         String?
+  diagnosis     String?
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@map("appointments")
+}
+
+model MedicalRecord {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doctorId   String
+  doctor     Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  date       DateTime
+  type       String
+  diagnosis  String?
+  notes      String?
+  followUp   String?
+
+  createdAt  DateTime @default(now())
+
+  @@map("medical_records")
+}
+
+model Prescription {
+  id            String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doctorId      String
+  doctor        Doctor           @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  appointmentId String?
+  medicine      String
+  dosage        String
+  duration      String
+  status        PrescriptionStatus @default(ACTIVE)
+  date          DateTime
+
+  createdAt     DateTime         @default(now())
+
+  @@map("prescriptions")
+}
+
+model Medication {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  price           Float
+  image           String?
+  category        String
+  description     String?
+  dosage          String?
+  rating          Float    @default(0)
+  stock           Int      @default(0)
+  isPrescription  Boolean  @default(false)
+
+  cartItems       CartItem[]
+
+  @@map("medications")
+}
+
+model BlogPost {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  slug      String   @unique
+  content   String
+  excerpt   String?
+  image     String?
+  category  String
+  author    String
+  readTime  String?
+  views     Int      @default(0)
+  published Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("blog_posts")
+}
+
+model CartItem {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String?
+  medicationId String
+  medication Medication @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+  quantity   Int        @default(1)
+
+  @@map("cart_items")
+}
+
+enum Role {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+enum Status {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum Type {
+  CONSULTATION
+  FOLLOW_UP
+  EMERGENCY
+  PREVENTIVE
+}
+
+enum PrescriptionStatus {
+  ACTIVE
+  COMPLETED
+  EXPIRED
+  CANCELLED
+}

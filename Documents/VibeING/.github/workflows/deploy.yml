@@ -1,0 +1,56 @@
+# ============================================
+# GitHub Actions — Деплой на GitHub Pages
+# ============================================
+# Расположить в: .github/workflows/deploy.yml
+# Сайт появится через 1-2 минуты после push в main
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]          # или master
+  workflow_dispatch:           # ручной запуск
+
+permissions:
+  contents: read
+  pages: write                # разрешение на деплой
+  id-token: write             # для E2E (проверка подлинности)
+
+# Ограничиваем один деплой одновременно
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Если проект на React/Vue/Angular — раскомментировать:
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: '20'
+      #     cache: 'npm'
+      # - name: Install dependencies
+      #   run: npm ci
+      # - name: Build
+      #   run: npm run build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .               # корень репозитория (или папку билда)
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

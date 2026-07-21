@@ -1,3 +1,3 @@
-# NutriTrack — Счётчик калорий
+# NutriTrack - Counter
 
-Умный счётчик калорий с умным поиском, избранными продуктами и трекингом питания.
+Smart calorie counter with search and favorites.

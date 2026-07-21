@@ -1,6 +1,23 @@
-# Server configuration (do NOT commit this file!)
-# Load via: .deploy-env (sourced in deploy.sh)
+# ── Server Configuration (DO NOT COMMIT) ──────────────
+# Load via: source .deploy-env (bash) or . deploy-env (PowerShell)
 
 export DEPLOY_SERVER_IP="155.212.231.220"
 export DEPLOY_SSH_USER="root"
 export DEPLOY_SSH_KEY="~/.ssh/id_ed25519_155.212.231.220"
+
+# ── PostgreSQL (FinFlow) ─────────────────────────────
+# 🔒 CHANGE THESE BEFORE PRODUCTION DEPLOY!
+export DB_HOST="localhost"
+export DB_PORT="5432"
+export DB_NAME="vibeing_finflow"
+export DB_USER="vibeing"
+export DB_PASSWORD="CHANGE_ME_IN_PRODUCTION_USE_STRONG_PASSWORD"
+
+# ── Next.js Auth ─────────────────────────────────────
+export AUTH_SECRET="CHANGE_ME_USE_RANDOM_GENERATOR"
+export ALLOW_DEMO_LOGIN="false"
+
+# ── FinFlow (Optional: Supabase) ─────────────────────
+# Set these if using Supabase for auth:
+# export NEXT_PUBLIC_SUPABASE_URL="https://xxx.supabase.co"
+# export NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJ..."

@@ -140,13 +140,20 @@ Write-Host "Build done in ${buildTime}s" -ForegroundColor Green
 # Phase 2: Start production servers
 Write-Host ""
 Write-Host "=== Phase 2: Starting production servers ===" -ForegroundColor Cyan
-Write-Host "  Mode: next start prodcution" -ForegroundColor Yellow
+Write-Host "  Mode: next start (production)" -ForegroundColor Yellow
 Write-Host "  RAM limit: 512MB per server" -ForegroundColor Yellow
 
 # FIX: Increased NODE_OPTIONS from 512MB to 2048MB for production.
 # 512MB was causing rendering failures — Next.js needs at least 1-2GB
 # of heap space per instance to handle concurrent requests properly.
-$envH = @{ "NODE_OPTIONS" = "--max-old-space-size=2048" }
+# Dynamic memory: production needs less (no hot reloading)
+$ramGB = Get-CimInstance Win32_ComputerSystem | Select-Object -ExpandProperty TotalPhysicalMemory
+$ramGB = [math]::Floor($ramGB / 1GB)
+$prodMem = if ($ramGB -ge 32) { 2048 }
+           elseif ($ramGB -ge 16) { 1536 }
+           else { 1024 }
+
+$envH = @{ "NODE_OPTIONS" = "--max-old-space-size=$prodMem" }
 
 foreach ($p in $projects) {
     $dir = Join-Path $baseDir $p.dir

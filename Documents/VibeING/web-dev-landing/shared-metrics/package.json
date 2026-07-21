@@ -1,0 +1,13 @@
+{
+  "name": "@vibeing/shared-metrics",
+  "version": "1.0.0",
+  "description": "Shared metrics library for VibeING ecosystem",
+  "main": "lib/metrics-config.ts",
+  "types": "lib/metrics-config.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["metrics", "analytics", "vibeing"],
+  "author": "VibeING Team",
+  "license": "MIT"
+}

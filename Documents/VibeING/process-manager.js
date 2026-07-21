@@ -91,10 +91,17 @@ class ProcessManager {
         this.remove(name);
       });
 
+      // 🔒 CRITICAL: 'close' event ensures log streams are destroyed
+      child.on('close', (code, signal) => {
+        console.log(`[ProcessManager] "${name}" closed (code=${code}, signal=${signal})`);
+        // Destroy log streams to prevent file descriptor leaks
+        if (logStream) logStream.destroy();
+        if (errStream) errStream.destroy();
+        this.remove(name);
+      });
+
       child.on('exit', (code, signal) => {
         console.log(`[ProcessManager] "${name}" exited (code=${code}, signal=${signal})`);
-        this.remove(name);
-
         // Auto-restart if it exited unexpectedly and retries remain
         if (code !== 0 && retriesLeft > 0 && !this.killed) {
           console.log(`[ProcessManager] "${name}" restarting (attempt ${retry - retriesLeft + 1}/${retry})...`);

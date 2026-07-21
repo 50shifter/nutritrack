@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider, WishlistProvider } from "@/lib/context";
 import LayoutShell from "./_components/LayoutShell";
+import { MetadataLayout } from "./_components/MetricsLayout";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -45,7 +46,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full bg-[#0F1410] text-[#F5F0E8] font-sans antialiased">
         <CartProvider>
           <WishlistProvider>
-            <LayoutShell>{children}</LayoutShell>
+            <MetadataLayout>
+              <LayoutShell>{children}</LayoutShell>
+            </MetadataLayout>
           </WishlistProvider>
         </CartProvider>
       </body>

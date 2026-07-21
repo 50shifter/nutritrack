@@ -20,11 +20,12 @@ export const { handlers, auth, signIn, signOut, unstable_update: updateSession }
         const password = credentials.password as string;
 
         // Demo mode — no DB connected
+        // Demo login requires ALLOW_DEMO_LOGIN=true in .env
+        // No hardcoded password - any non-empty password works for demo
         if (!isDbConnected || !prisma) {
-          // Check demo credentials (only if ALLOW_DEMO_LOGIN=true)
           if (process.env.ALLOW_DEMO_LOGIN === "true" &&
               email === "demo@medicare.ru" &&
-              password === "demo123") {
+              password.length >= 1) {
             return {
               id: crypto.randomUUID(),
               name: "Демо Пользователь",

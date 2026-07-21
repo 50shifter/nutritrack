@@ -1,90 +1,133 @@
-import { NextResponse } from "next/server";
+/**
+ * Goals API — PostgreSQL Backend
+ * 🔒 Fixed: Zod validation for all inputs
+ */
+import { NextResponse } from 'next/server';
+import { init } from '@/lib/db';
+import { getGoals, addGoal, updateGoal, deleteGoal } from '@/lib/repositories/goal-repo';
+import { z } from 'zod';
 
-// DEMO: это pet-project — API-роуты используют in-memory данные (сбрасываются при перезапуске).
-// Фронтенд работает напрямую с localStorage, эти роуты — заглушки для будущего бэкенда.
-const MOCK_GOALS = [
-  { id: "1", name: "Отпуск в Турции", target: 150000, current: 98000, deadline: "2026-06-01", color: "#34d399" },
-  { id: "2", name: "Новый MacBook", target: 250000, current: 180000, deadline: "2026-03-15", color: "#60a5fa" },
-  { id: "3", name: "Подушка безопасности", target: 500000, current: 230000, deadline: "2026-12-31", color: "#a78bfa" },
-];
+const GoalSchema = z.object({
+  name: z.string().min(1).max(200),
+  targetAmount: z.number().positive(),
+  currentAmount: z.number().nonnegative().default(0),
+  deadline: z.string().nullable().optional(),
+  color: z.string().regex(/^#[0-9a-f]{6}$/i).optional(),
+});
 
-let goals = [...MOCK_GOALS];
-let nextId = 4;
+const IdParamSchema = z.object({ id: z.coerce.number().int().positive() });
+
+const UserIdParamSchema = z.object({ userId: z.coerce.number().int().positive().default(1) });
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
-
-  if (id) {
-    const goal = goals.find((g) => g.id === id);
-    if (!goal) return NextResponse.json({ error: "Цель не найдена" }, { status: 404 });
-    return NextResponse.json(goal);
+  try {
+    await init();
+    
+    const parsed = UserIdParamSchema.safeParse(Object.fromEntries(
+      new URL(request.url).searchParams.entries()
+    ));
+    
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Valid userId required' }, { status: 400 });
+    }
+    
+    const goals = await getGoals(parsed.data.userId);
+    return NextResponse.json(goals.rows);
+  } catch (error) {
+    console.error('[Goals API GET] Error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json(goals);
 }
 
 export async function POST(request: Request) {
   try {
+    await init();
+    
     const body = await request.json();
-    const { name, target, deadline, current = 0, color = "#a78bfa" } = body;
-
-    if (!name || !target || !deadline) {
-      return NextResponse.json({ error: "Необходимо: name, target, deadline" }, { status: 400 });
+    const parsed = GoalSchema.safeParse(body);
+    
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid goal data', details: parsed.error.errors },
+        { status: 400 }
+      );
     }
-
-    const newGoal = {
-      id: String(nextId++),
-      name,
-      target: Number(target),
-      current: Number(current) || 0,
-      deadline,
-      color,
-    };
-
-    goals.push(newGoal);
-    return NextResponse.json(newGoal, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "Неверный формат данных" }, { status: 400 });
+    
+    const { name, targetAmount, currentAmount, deadline } = parsed.data;
+    const userId = body.userId ? parseInt(String(body.userId)) : 1;
+    
+    const result = await addGoal(userId, name, targetAmount, deadline);
+    return NextResponse.json(result.rows[0], { status: 201 });
+  } catch (error) {
+    console.error('[Goals API POST] Error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
 export async function PUT(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-    if (!id) return NextResponse.json({ error: "Необходим параметр id" }, { status: 400 });
-
-    const body = await request.json();
-    const goalIndex = goals.findIndex((g) => g.id === id);
-    if (goalIndex === -1) return NextResponse.json({ error: "Цель не найдена" }, { status: 404 });
-
-    if (body.currentIncrement !== undefined) {
-      const increment = Number(body.currentIncrement) || 0;
-      goals[goalIndex] = {
-        ...goals[goalIndex],
-        current: Math.min(goals[goalIndex].current + increment, goals[goalIndex].target),
-      };
+    await init();
+    
+    const parsedId = IdParamSchema.safeParse(Object.fromEntries(
+      new URL(request.url).searchParams.entries()
+    ));
+    
+    if (!parsedId.success) {
+      return NextResponse.json({ error: 'Valid goal ID required' }, { status: 400 });
     }
-
-    if (body.name !== undefined) goals[goalIndex].name = body.name;
-    if (body.target !== undefined) goals[goalIndex].target = Number(body.target);
-    if (body.deadline !== undefined) goals[goalIndex].deadline = body.deadline;
-
-    return NextResponse.json(goals[goalIndex]);
-  } catch {
-    return NextResponse.json({ error: "Неверный формат данных" }, { status: 400 });
+    
+    const body = await request.json();
+    const parsed = GoalSchema.partial().safeParse(body);
+    
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid goal data', details: parsed.error.errors },
+        { status: 400 }
+      );
+    }
+    
+    const result = await updateGoal(
+      parsedId.data.id,
+      parsed.data.name,
+      parsed.data.targetAmount,
+      parsed.data.currentAmount || 0,
+      parsed.data.deadline
+    );
+    return NextResponse.json(result.rows[0]);
+  } catch (error) {
+    console.error('[Goals API PUT] Error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
 export async function DELETE(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
-  if (!id) return NextResponse.json({ error: "Необходим параметр id" }, { status: 400 });
-
-  const index = goals.findIndex((g) => g.id === id);
-  if (index === -1) return NextResponse.json({ error: "Цель не найдена" }, { status: 404 });
-
-  goals.splice(index, 1);
-  return NextResponse.json({ success: true });
+  try {
+    await init();
+    
+    const parsedId = IdParamSchema.safeParse(Object.fromEntries(
+      new URL(request.url).searchParams.entries()
+    ));
+    
+    if (!parsedId.success) {
+      return NextResponse.json({ error: 'Valid goal ID required' }, { status: 400 });
+    }
+    
+    const result = await deleteGoal(parsedId.data.id);
+    return NextResponse.json(result.rows[0] || { id: parsedId.data.id });
+  } catch (error) {
+    console.error('[Goals API DELETE] Error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
 }

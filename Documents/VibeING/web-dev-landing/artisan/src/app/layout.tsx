@@ -2,6 +2,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
 import { ThemeProvider } from "@/components/ThemeToggle";
+import { MetadataLayout } from "./_components/MetricsLayout";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
@@ -73,8 +74,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-full bg-dark-900">
         <ThemeProvider>
-          {/* Yandex.Metrica — replace 12345678 with your actual counter ID */}
-          <Script
+          <MetadataLayout>
+            {/* Yandex.Metrica — replace 12345678 with your actual counter ID */}
+            <Script
             id="yandex-metrika"
             strategy="afterInteractive"
             dangerouslySetInnerHTML={{
@@ -89,6 +91,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }}
           />
           {children}
+          </MetadataLayout>
         </ThemeProvider>
       </body>
     </html>

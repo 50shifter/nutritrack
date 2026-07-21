@@ -23,9 +23,10 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"],
+      "@shared": ["../shared-security/index.ts"],
+      "@shared/*": ["../shared-security/*"],
+      "@shared-metrics/*": ["../shared-metrics/*"]
     }
   },
   "include": [

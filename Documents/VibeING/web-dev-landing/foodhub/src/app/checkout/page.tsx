@@ -8,6 +8,7 @@ import type { CartItem } from "@/store/cartStore";
 import { MapPin, CreditCard, Truck, Clock, Check } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { initMetrics, trackEvent } from "@shared-metrics/lib/metrics-client";
 
 interface FormData {
   name: string;
@@ -31,7 +32,14 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     setCart(loadCart());
-  }, []);
+    // Initialize metrics and track checkout started
+    initMetrics({
+      projectId: "foodhub",
+      endpoint: "/api/metrics",
+      debug: process.env.NODE_ENV === "development",
+    });
+    trackEvent("checkout_started", { itemCount: String(cart.length), total: String(total) });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const total = cartTotal(cart);
   const deliveryFee = total >= 1500 ? 0 : 199;
@@ -54,6 +62,13 @@ export default function CheckoutPage() {
       setCart([]);
       setLoading(false);
       setOrderPlaced(true);
+      // Track order placed
+      trackEvent("order_placed", {
+        total: String(finalTotal),
+        itemCount: String(cart.length),
+        paymentMethod: formData.payment,
+        items: cart.map(i => i.name).join(","),
+      });
     }, 2000);
   }, [formData]);
 

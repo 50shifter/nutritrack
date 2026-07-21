@@ -64,12 +64,12 @@ function SignInFormInner() {
             </motion.div>
           )}
 
-          {/* Demo credentials */}
-          {!searchParams.get("demo") && (
+          {/* Demo credentials - only shown when demo is explicitly enabled */}
+          {searchParams.get("demo") && (
             <div className="p-3 rounded-xl bg-[#F1F5F9] border border-[#E2E8F0] text-xs">
               <span className="text-text/40 font-medium">Демо-режим:</span>
               <br />
-              email: demo@medicare.ru / пароль: demo123
+              email: demo@medicare.ru / пароль: любой
             </div>
           )}
 

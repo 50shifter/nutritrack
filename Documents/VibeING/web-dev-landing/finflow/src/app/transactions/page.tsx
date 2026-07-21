@@ -1,34 +1,17 @@
 "use client";
 
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Search, Download, SortAsc, SortDesc, Plus, Pencil, Trash2, Upload, X } from "lucide-react";
 import TransactionRow from "@/components/TransactionRow";
 import Pagination from "@/components/Pagination";
-import { MOCK_TRANSACTIONS, MOCK_CATEGORIES } from "@/lib/mock-data";
+import { MOCK_CATEGORIES } from "@/lib/mock-data";
 import { useApp } from "@/lib/context";
 import type { Transaction } from "@/lib/types";
 
 type SortField = "date" | "description" | "amount" | "category";
 type SortDirection = "asc" | "desc";
 
-function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
-
-function loadTransactions(): Transaction[] {
-  try {
-    const raw = localStorage.getItem("finflow_transactions");
-    if (raw) return JSON.parse(raw);
-  } catch { /* ignore */ }
-  // Seed with mock data on first load
-  return MOCK_TRANSACTIONS;
-}
-
-function saveTransactions(data: Transaction[]) {
-  localStorage.setItem("finflow_transactions", JSON.stringify(data));
-}
-
-/* ─── Transaction Form Modal ─── */
+// ─── Transaction Form Modal ───
 function TransactionModal({
   transaction,
   onClose,
@@ -36,7 +19,7 @@ function TransactionModal({
 }: {
   transaction?: Transaction;
   onClose: () => void;
-  onSave: (t: Transaction) => void;
+  onSave: (t: Omit<Transaction, "id"> & { id?: number }) => void;
 }) {
   const [form, setForm] = useState({
     date: transaction?.date ?? new Date().toISOString().split("T")[0],
@@ -54,7 +37,7 @@ function TransactionModal({
     const amt = Number(form.amount);
     if (!form.description.trim() || !amt || amt <= 0 || !form.category) return;
     onSave({
-      id: transaction?.id ?? generateId(),
+      id: (transaction as any)?.id,
       date: form.date,
       description: form.description.trim(),
       amount: amt,
@@ -165,18 +148,14 @@ function CsvImportModal({ onClose, onImport }: { onClose: () => void; onImport: 
       const parts = line.split(/[;,\t]/).map((p) => p.trim());
       if (parts.length < 3) continue;
 
-      // Try to detect format: date, description, category, amount
       let date = "", desc = "", cat = "", amt = 0;
 
-      // Pattern 1: "2025-01-15;Зарплата;Зарплата;85000"
-      // Pattern 2: "15.01.2025;Продукты;Еда;-4500"
       if (parts.length >= 4) {
         date = parts[0];
         desc = parts[1];
         cat = parts[2];
         amt = Number(parts[3].replace(/[^\d.]/g, ""));
       } else if (parts.length === 3) {
-        // Try: date;description;amount
         date = parts[0];
         desc = parts[1];
         amt = Number(parts[2].replace(/[^\d.]/g, ""));
@@ -196,7 +175,7 @@ function CsvImportModal({ onClose, onImport }: { onClose: () => void; onImport: 
       }
 
       results.push({
-        id: generateId(),
+        id: 0, // Will be set by DB
         date: normalizedDate,
         description: desc,
         amount: Math.round(amt),
@@ -308,7 +287,8 @@ function DeleteConfirmModal({
 export default function TransactionsPage() {
   const { currency } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>(loadTransactions);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -317,35 +297,117 @@ export default function TransactionsPage() {
   const [sortDir, setSortDir] = useState<SortDirection>("desc");
   const [showAdd, setShowAdd] = useState(false);
   const [editTx, setEditTx] = useState<Transaction | undefined>(undefined);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const [importing, setImporting] = useState(false);
 
-  // Save to localStorage on every change
-  const updateTransactions = (updater: (prev: Transaction[]) => Transaction[]) => {
-    const next = updater(transactions);
-    setTransactions(next);
-    saveTransactions(next);
+  // Fetch transactions from API
+  const fetchTransactions = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/transactions?userId=1`);
+      const result = await response.json();
+      if (result.data) {
+        const txs = result.data.map((t: any) => ({
+          ...t,
+          id: t.id, // Keep numeric ID from DB
+          amount: Number(t.amount),
+        }));
+        setTransactions(txs);
+      }
+    } catch (error) {
+      console.error('Failed to fetch transactions:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  // Handle add transaction via API
+  const handleAdd = async (t: Omit<Transaction, "id"> & { id?: number }) => {
+    try {
+      const response = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: 1,
+          amount: t.amount,
+          type: t.type,
+          category: t.category,
+          description: t.description,
+          date: t.date,
+        }),
+      });
+      const result = await response.json();
+      if (result.id) {
+        await fetchTransactions();
+        setShowAdd(false);
+      }
+    } catch (error) {
+      console.error('Failed to add transaction:', error);
+    }
   };
 
-  const handleAdd = (t: Transaction) => {
-    updateTransactions((prev) => [...prev, t]);
-    setShowAdd(false);
+  // Handle edit transaction via API
+  const handleEdit = async (t: Transaction) => {
+    try {
+      const response = await fetch('/api/transactions', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: t.id,
+          amount: t.amount,
+          type: t.type,
+          category: t.category,
+          description: t.description,
+        }),
+      });
+      const result = await response.json();
+      if (result.id) {
+        await fetchTransactions();
+        setEditTx(undefined);
+      }
+    } catch (error) {
+      console.error('Failed to update transaction:', error);
+    }
   };
 
-  const handleEdit = (t: Transaction) => {
-    updateTransactions((prev) => prev.map((tx) => (tx.id === t.id ? t : tx)));
-    setEditTx(undefined);
-  };
-
-  const handleDelete = () => {
+  // Handle delete transaction via API
+  const handleDelete = async () => {
     if (!deleteId) return;
-    updateTransactions((prev) => prev.filter((tx) => tx.id !== deleteId));
-    setDeleteId(null);
+    try {
+      await fetch(`/api/transactions?id=${deleteId}`, { method: 'DELETE' });
+      await fetchTransactions();
+      setDeleteId(null);
+    } catch (error) {
+      console.error('Failed to delete transaction:', error);
+    }
   };
 
-  const handleImport = (txs: Transaction[]) => {
-    updateTransactions((prev) => [...prev, ...txs]);
-    setImporting(false);
+  // Handle import via API (batch add)
+  const handleImport = async (txs: Transaction[]) => {
+    try {
+      for (const tx of txs) {
+        await fetch('/api/transactions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: 1,
+            amount: tx.amount,
+            type: tx.type,
+            category: tx.category,
+            description: tx.description,
+            date: tx.date,
+          }),
+        });
+      }
+      await fetchTransactions();
+      setImporting(false);
+    } catch (error) {
+      console.error('Failed to import transactions:', error);
+    }
   };
 
   const exportCSV = () => {
@@ -382,8 +444,21 @@ export default function TransactionsPage() {
     return result;
   }, [transactions, search, filterType, filterCategory, sortField, sortDir]);
 
-  const totalPages = Math.ceil(filtered.length / 10);
-  const paged = filtered.slice((page - 1) * 10, page * 10);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / 10));
+  // Ensure page is valid
+  const validPage = Math.min(page, totalPages);
+  const paged = filtered.slice((validPage - 1) * 10, validPage * 10);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm text-white/40">Загрузка транзакций...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -463,7 +538,7 @@ export default function TransactionsPage() {
                       <button onClick={() => setEditTx(t)} className="p-1.5 rounded-lg hover:bg-white/5 text-white/20 hover:text-white/50 transition-colors">
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => setDeleteId(t.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/20 hover:text-red-400 transition-colors">
+                      <button onClick={() => setDeleteId(t.id as number)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/20 hover:text-red-400 transition-colors">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -476,13 +551,13 @@ export default function TransactionsPage() {
             </tbody>
           </table>
         </div>
-        <Pagination page={page} totalPages={totalPages} totalItems={filtered.length} perPage={10} onPageChange={setPage} />
+        <Pagination page={validPage} totalPages={totalPages} totalItems={filtered.length} perPage={10} onPageChange={setPage} />
       </div>
 
       {/* Modals */}
       {showAdd && <TransactionModal onClose={() => setShowAdd(false)} onSave={handleAdd} />}
       {editTx && <TransactionModal transaction={editTx} onClose={() => setEditTx(undefined)} onSave={handleEdit} />}
-      {deleteId && (
+      {deleteId !== null && (
         <DeleteConfirmModal
           description={transactions.find((t) => t.id === deleteId)?.description ?? ""}
           onClose={() => setDeleteId(null)}

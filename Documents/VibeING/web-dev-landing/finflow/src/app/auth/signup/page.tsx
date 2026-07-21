@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { trackSignup } from "@/lib/metrics/service";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -54,6 +55,10 @@ export default function SignUpPage() {
           localStorage.setItem("finflow_user", JSON.stringify(userData));
           localStorage.setItem("finflow_user_name", name);
           localStorage.setItem("finflow_auth", "true");
+          
+          // Track signup event
+          trackSignup(email);
+          
           router.push("/dashboard");
           return;
         }
@@ -64,6 +69,10 @@ export default function SignUpPage() {
       localStorage.setItem("finflow_user", JSON.stringify(userData));
       localStorage.setItem("finflow_user_name", name || "User");
       localStorage.setItem("finflow_auth", "true");
+      
+      // Track demo signup
+      trackSignup(email || "demo@finflow.com");
+      
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Ошибка регистрации");

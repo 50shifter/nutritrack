@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, LogIn } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { login } from "../actions";
+import { trackSignin } from "@/lib/metrics/service";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -21,50 +23,38 @@ export default function SignInPage() {
     }
   }, [router]);
 
-  const handleLogin = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      // Try Supabase Auth if configured
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-      if (supabaseUrl && supabaseAnonKey) {
-        const { createClient } = await import("@supabase/supabase-js");
-        const supabase = createClient(supabaseUrl, supabaseAnonKey);
-        const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-        if (authError) throw authError;
-        if (data.session) {
-          const userData = { email: data.user.email, name: data.user?.user_metadata?.name || "User", loggedIn: true, createdAt: new Date().toISOString() };
-          localStorage.setItem("finflow_user", JSON.stringify(userData));
-          localStorage.setItem("finflow_user_name", data.user?.user_metadata?.name || "User");
-          localStorage.setItem("finflow_auth", "true");
-          router.push("/dashboard");
-          return;
-        }
-      }
-
-      // Fallback: Demo login with mock credentials
-      if (email === "demo@finflow.com" && password === "demo123") {
-        const userData = { email: "demo@finflow.com", name: "Алексей", loggedIn: true, createdAt: new Date().toISOString() };
+      const result = await login(email, password);
+      
+      if (result.success && result.redirectTo) {
+        // Store session safely
+        const userData = { 
+          email: email, 
+          name: email.includes("demo") ? "Алексей" : "User", 
+          loggedIn: true, 
+          createdAt: new Date().toISOString() 
+        };
         localStorage.setItem("finflow_user", JSON.stringify(userData));
-        localStorage.setItem("finflow_user_name", "Алексей");
+        localStorage.setItem("finflow_user_name", userData.name);
         localStorage.setItem("finflow_auth", "true");
-        router.push("/dashboard");
+        
+        // Track sign-in event
+        trackSignin(email);
+        
+        router.push(result.redirectTo);
       } else {
-        throw new Error("Неверный email или пароль");
+        setError(result.error || "Неверный email или пароль");
       }
-    } catch (err: any) {
-      setError(err.message || "Ошибка входа");
+    } catch {
+      setError("Ошибка входа. Попробуйте позже.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await handleLogin();
   };
 
   return (
@@ -152,9 +142,11 @@ export default function SignInPage() {
           </form>
 
           <div className="mt-6 pt-6 border-t border-white/5">
-            <p className="text-xs text-center text-white/30">
-              Демо: <span className="text-white/50">demo@finflow.com</span> / <span className="text-white/50">demo123</span>
-            </p>
+            {process.env.NEXT_PUBLIC_SHOW_DEMO_HINT === "true" && (
+              <p className="text-xs text-center text-white/30">
+                Demo mode: use any email/password (enabled via ALLOW_DEMO_LOGIN=true)
+              </p>
+            )}
           </div>
 
           <p className="text-center text-sm text-white/40 mt-6">

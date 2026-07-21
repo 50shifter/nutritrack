@@ -15,9 +15,17 @@ import ContactSection from "@/components/ContactSection";
 import NewsletterSection from "@/components/NewsletterSection";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
+import { initMetrics, trackEvent } from "@shared-metrics/lib/metrics-client";
 
 function HomeContent() {
   const [activeSection, setActiveSection] = useState("");
+
+  // Track pageview on mount
+  useEffect(() => {
+    trackEvent("pageview", { page: "/" });
+    trackEvent("gallery_viewed", { count: 24 });
+  }, []);
+
 
   useEffect(() => {
     const observer = new IntersectionObserver(

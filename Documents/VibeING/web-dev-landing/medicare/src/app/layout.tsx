@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
+import { MetadataLayout } from "./_components/MetricsLayout";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
@@ -19,7 +20,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru" className={`${geistSans.variable}`}>
-      <body className="min-h-full bg-white-900">{children}</body>
+      <body className="min-h-full bg-white-900">
+        <MetadataLayout>{children}</MetadataLayout>
+      </body>
     </html>
   );
 }

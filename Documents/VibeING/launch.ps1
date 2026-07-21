@@ -234,22 +234,29 @@ $dirs = @(
     "web-dev-landing\greenmarket",
     "web-dev-landing\foodhub",
     "web-dev-landing\luxstay",
-    "web-dev-landing\artisan"
+    "web-dev-landing\artisan",
+    "web-dev-landing\metrics-dashboard"
 )
-$ports = @(3001, 3002, 3003, 3004, 3005, 3006)
-$names = @("finflow", "medicare", "greenmarket", "foodhub", "luxstay", "artisan")
+$ports = @(3001, 3002, 3003, 3004, 3005, 3006, 3099)
+$names = @("finflow", "medicare", "greenmarket", "foodhub", "luxstay", "artisan", "metrics-dashboard")
 
 try {
     Write-Host ""
     Write-Host "=== Launching all projects with ProcessManager ===" -ForegroundColor Cyan
 
+    # Dynamic memory allocation based on system RAM
+    $totalGB = Get-CimInstance Win32_ComputerSystem | Select-Object -ExpandProperty TotalPhysicalMemory
+    $totalGB = [math]::Floor($totalGB / 1GB)
+    
+    # Calculate per-instance memory: 4 projects = 2GB, 6+ projects = 1.5GB each
+    $perInstanceMB = if ($totalGB -ge 32) { 2048 }
+                     elseif ($totalGB -ge 16) { 1536 }
+                     else { 1024 }
+    
+    Write-Host "  System RAM: ${totalGB}GB, Per-instance limit: ${perInstanceMB}MB" -ForegroundColor Gray
+
     for ($i = 0; $i -lt $dirs.Count; $i++) {
-        # Set environment variable for memory limit before spawning.
-        # FIX: Increased to 4GB per instance — critical fix for rendering on first load.
-        # With 6 concurrent dev servers, each needs ample heap space during initial
-        # compilation. Low memory (1024MB) causes OOM which produces empty HTML shells
-        # (HTTP 200 but no content) until the cache warms up.
-        $env:NODE_OPTIONS = "--max-old-space-size=4096"
+        $env:NODE_OPTIONS = "--max-old-space-size=$perInstanceMB"
         $pm.Spawn(
             $names[$i],
             "npx",
@@ -286,6 +293,28 @@ try {
         Write-Host "[WARN] Not all servers became ready within ${maxWait}s. Some may still be compiling." -ForegroundColor Yellow
     } else {
         Write-Host "  All servers are ready!" -ForegroundColor Green
+    }
+
+    # ── Post-launch smoke test ─────────────────────────────
+    Write-Host ""
+    Write-Host "[POST-LAUNCH] Running smoke tests..." -ForegroundColor Yellow
+    $smokeFailed = 0
+    foreach ($port in $ports) {
+        try {
+            $res = Invoke-WebRequest -Uri "http://localhost:${port}/health" -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop
+            if ($res.StatusCode -ne 200) {
+                Write-Host "  [WARN] Port $port health: $($res.StatusCode)" -ForegroundColor Yellow
+                $smokeFailed++
+            }
+        } catch {
+            Write-Host "  [FAIL] Port $port not responding" -ForegroundColor Red
+            $smokeFailed++
+        }
+    }
+    if ($smokeFailed -eq 0) {
+        Write-Host "  [OK] All servers responding correctly" -ForegroundColor Green
+    } else {
+        Write-Host "  [!] $smokeFailed servers have issues - check logs in Logs/" -ForegroundColor Yellow
     }
 
     $ports_check = netstat -ano | Select-String ":300[1-6] " | Select-String "LISTENING"

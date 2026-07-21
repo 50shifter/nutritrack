@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Instagram, Facebook, Send, CheckCircle, AlertCircle, Send as TelegramIcon } from "lucide-react";
+import { initMetrics, trackEvent } from "@shared-metrics/lib/metrics-client";
 
 const contactInfo = [
   { icon: Mail, label: "Email", value: "hello@artisan.photo" },
@@ -31,6 +32,15 @@ export default function ContactSection() {
   const [sending, setSending] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
+  // Track pageview on mount
+  useEffect(() => {
+    initMetrics({
+      projectId: "artisan",
+      endpoint: "/api/metrics",
+      debug: process.env.NODE_ENV === "development",
+    });
+  }, []);
+
   const validate = () => {
     const errs: Record<string, string> = {};
     if (!form.name.trim()) errs.name = "Укажите имя";
@@ -58,6 +68,13 @@ export default function ContactSection() {
     setForm({ name: "", email: "", type: "", message: "" });
     setTimeout(() => setSubmitted(false), 4000);
     setSending(false);
+
+    // Track contact form submission
+    trackEvent("contact_form_submitted", {
+      name: form.name,
+      type: form.type,
+      message: form.message.substring(0, 100),
+    });
   };
 
   return (

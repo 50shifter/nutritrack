@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense, useRef } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from "recharts";
 import { TrendingUp, TrendingDown, Wallet, Filter, Download, Activity, AlertTriangle, CreditCard } from "lucide-react";
 import KpiCard from "@/components/KpiCard";
@@ -10,6 +10,7 @@ import { MOCK_CATEGORIES, MONTHLY_DATA, WEEKLY_DATA } from "@/lib/mock-data";
 import { formatCurrency } from "@/lib/utils";
 import { useApp } from "@/lib/context";
 import type { MonthlyData, PieItem, Transaction, WeeklyData } from "@/lib/types";
+import { trackDashboardView, trackChartFilter, trackExport } from "@/lib/metrics/service";
 
 interface DashboardStats {
   balance: number;
@@ -73,11 +74,25 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [viewMode, setViewMode] = useState<"overview" | "analytics">("overview");
 
-  const computeStats = useCallback((txs: Transaction[]) => {
+  const computeStats = useCallback((txs: Transaction[], apiStats?: any) => {
     const filtered = timeRange === 0 ? txs : txs.filter((t) => {
       const cutoff = new Date(Date.now() - timeRange * 86400000);
       return new Date(t.date) >= cutoff;
     });
+
+    // Use API stats if available, otherwise compute from transactions
+    if (apiStats) {
+      return {
+        balance: apiStats.balance,
+        totalIncome: apiStats.totalIncome,
+        totalExpense: apiStats.totalExpense,
+        monthlyData: apiStats.monthlyData?.length > 0 ? apiStats.monthlyData : [],
+        pieData: apiStats.pieData?.length > 0 ? apiStats.pieData : [],
+        weeklyData: apiStats.weeklyData?.length > 0 ? apiStats.weeklyData : [],
+        topCategories: apiStats.topCategories || [],
+        budgetProgress: apiStats.budgetProgress || [],
+      };
+    }
 
     const income = filtered.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
     const expense = filtered.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
@@ -111,61 +126,80 @@ export default function DashboardPage() {
         return { name: c.name, current: spent, limit: c.limit!, color: c.color };
       });
 
-    // Monthly data — aggregate by month from transactions or use mock
-    const monthlyMap = new Map<string, { income: number; expense: number }>();
-    txs.forEach((t) => {
-      const month = t.date.slice(0, 7); // YYYY-MM
-      if (!monthlyMap.has(month)) monthlyMap.set(month, { income: 0, expense: 0 });
-      const m = monthlyMap.get(month)!;
-      if (t.type === "income") m.income += t.amount;
-      else m.expense += t.amount;
-    });
-
-    // Fill gaps and sort
-    const months = Array.from(monthlyMap.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-12)
-      .map(([month, data]) => {
-        const m = new Date(month + "-01");
-        const names = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
-        return { month: names[m.getMonth()], income: data.income, expense: data.expense, profit: data.income - data.expense };
-      });
-
-    if (months.length === 0) {
-      // Fallback to mock data
-      return {
-        balance: 0, totalIncome: 0, totalExpense: 0,
-        monthlyData: MONTHLY_DATA,
-        pieData: MOCK_CATEGORIES.filter((c) => c.type === "expense").map((c) => ({ name: c.name, value: 0, color: c.color })).filter((d) => d.value > 0) || [],
-        weeklyData: WEEKLY_DATA,
-        topCategories: [],
-        budgetProgress: [],
-      };
-    }
-
     return {
       balance: income - expense,
       totalIncome: income,
       totalExpense: expense,
-      monthlyData: months.length > 0 ? months : MONTHLY_DATA,
+      monthlyData: [],
       pieData,
-      weeklyData: WEEKLY_DATA,
+      weeklyData: [],
       topCategories,
       budgetProgress,
     };
   }, [timeRange]);
 
-  const fetchData = useCallback(() => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    const txs = getTransactions();
-    setTransactions(txs);
-    setStats(computeStats(txs));
-    setLoading(false);
-  }, [computeStats, timeRange]);
+    try {
+      // Fetch dashboard stats (aggregated data) from PostgreSQL API
+      const response = await fetch(`/api/dashboard?userId=1&days=${timeRange}`);
+      const result = await response.json();
+      
+      if (result && !result.error) {
+        // Set aggregated stats from API
+        setStats({
+          balance: result.balance || 0,
+          totalIncome: result.totalIncome || 0,
+          totalExpense: result.totalExpense || 0,
+          monthlyData: result.monthlyData || [],
+          pieData: result.pieData || [],
+          weeklyData: result.weeklyData || [],
+          topCategories: result.topCategories || [],
+          budgetProgress: result.budgetProgress || [],
+        });
+        
+        // Also fetch transactions for the list
+        const txResponse = await fetch(`/api/transactions?userId=1`);
+        const txResult = await txResponse.json();
+        
+        if (txResult.data) {
+          const txs = txResult.data.map((t: any) => ({
+            ...t,
+            id: String(t.id),
+            amount: Number(t.amount),
+          }));
+          setTransactions(txs);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [timeRange]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  useEffect(() => { setLoading(true); const txs = getTransactions(); setTransactions(txs); setStats(computeStats(txs)); setLoading(false); }, [computeStats]);
+  useEffect(() => {
+    setLoading(true);
+    fetchData();
+  }, [computeStats, timeRange, fetchData]);
+
+  // Track dashboard view on load
+  useEffect(() => {
+    if (!loading && stats) {
+      trackDashboardView();
+    }
+  }, [loading, stats]);
+
+  // Track chart filter changes
+  const prevTimeRange = React.useRef(timeRange);
+  useEffect(() => {
+    if (prevTimeRange.current !== timeRange && prevTimeRange.current !== undefined) {
+      trackChartFilter('time_range', String(timeRange));
+    }
+    prevTimeRange.current = timeRange;
+  }, [timeRange]);
 
   // ── All hooks must be called BEFORE any early return ──
   const rangeFilteredTx = useMemo(() => {
@@ -210,21 +244,35 @@ export default function DashboardPage() {
     a.download = `finflow_export_${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    
+    // Track export event
+    trackExport('csv');
   }, [rangeFilteredTx]);
 
-  const alerts = useMemo(() => [
-    ...(periodExpense > periodIncome ? [{ type: "danger" as const, message: "Расходы превышают доходы за период" }] : []),
-    ...(stats?.topCategories.slice(0, 3) || []).map((c) => ({ type: "warning" as const, message: `${c.name}: ${formatCurrency(c.amount, currency)} потрачено` })),
-  ], [periodIncome, periodExpense, stats?.topCategories, currency]);
+  const alerts = useMemo(() => {
+    const alertList: { type: "danger" | "warning"; message: string }[] = [];
+    
+    if (periodExpense > periodIncome) {
+      alertList.push({ type: "danger", message: "Расходы превышают доходы за период" });
+    }
+    
+    if (stats?.topCategories.slice(0, 3)) {
+      stats.topCategories.slice(0, 3).forEach((c) => {
+        alertList.push({ type: "warning", message: `${c.name}: ${formatCurrency(c.amount, currency)} потрачено` });
+      });
+    }
+    
+    return alertList;
+  }, [periodIncome, periodExpense, stats?.topCategories, currency]);
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <span className="inline-block px-3 py-1 rounded-full bg-violet-500/10 text-violet-400 text-xs font-medium border border-violet-500/20">🐾 Демо-режим</span>
+          <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium border border-emerald-500/20">🐘 PostgreSQL</span>
           <h2 className="text-2xl font-bold tracking-tight mt-2">Добро пожаловать, {userName || "гость"} 👋</h2>
-          <p className="text-sm text-white/40 mt-1">Данные хранятся локально (localStorage), серверная часть не используется</p>
+          <p className="text-sm text-white/40 mt-1">Данные в PostgreSQL • {transactions.length} транзакций</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setViewMode(viewMode === "overview" ? "analytics" : "overview")} className="px-3 py-1.5 rounded-lg bg-white/10 text-xs font-medium text-white hover:bg-white/15 transition-colors">

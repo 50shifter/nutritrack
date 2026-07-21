@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ChevronRight, ChevronLeft, Truck, Store, Check, CreditCard, MapPin, AlertCircle } from "lucide-react";
 import { useCart } from "@/lib/context";
 import { PageSkeleton } from "@/components/Skeleton";
 import { z } from "zod";
 import type { CheckoutForm } from "@/lib/types";
+import { initMetrics, trackEvent } from "@shared-metrics/lib/metrics-client";
 
 
 export { PageSkeleton as loading };
@@ -91,9 +92,26 @@ export default function CheckoutPage() {
         setProcessing(false);
         setStep("confirmation");
         clearCart();
+        // Track successful order
+        trackEvent("order_placed", {
+          total: String(finalTotal),
+          itemCount: String(items.length),
+          deliveryMethod: formData.deliveryMethod,
+          items: items.map(i => i.product.name).join(","),
+        });
       }, 2000);
     }
   };
+
+  // Track checkout started when entering page
+  useEffect(() => {
+    initMetrics({
+      projectId: "greenmarket",
+      endpoint: "/api/metrics",
+      debug: process.env.NODE_ENV === "development",
+    });
+    trackEvent("checkout_started", { itemCount: String(items.length) });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="pt-24 pb-20 px-6">

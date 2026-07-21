@@ -1,37 +1,30 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Plus, AlertCircle, Trash2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CategoryCard from "@/components/CategoryCard";
 import { MOCK_CATEGORIES } from "@/lib/mock-data";
 import type { Category } from "@/lib/types";
 
-function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
-
-function loadCategories(): Category[] {
-  try {
-    const raw = localStorage.getItem("finflow_categories");
-    if (raw) return JSON.parse(raw);
-  } catch { /* ignore */ }
-  return MOCK_CATEGORIES;
-}
-
-function saveCategories(data: Category[]) {
-  localStorage.setItem("finflow_categories", JSON.stringify(data));
+interface DbCategory {
+  id: number;
+  name: string;
+  type: "income" | "expense";
+  color: string;
+  icon?: string;
+  limit_amount?: number | null;
 }
 
 /* ─── Add Category Modal ─── */
-function AddCategoryModal({ onClose, onAdd }: { onClose: () => void; onAdd: (c: Category) => void }) {
+function AddCategoryModal({ onClose, onAdd }: { onClose: () => void; onAdd: (c: DbCategory) => void }) {
   const [name, setName] = useState("");
   const [type, setType] = useState<"expense" | "income">("expense");
   const [limit, setLimit] = useState("");
   const [tempIcon, setTempIcon] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) { setError("Введите название"); return; }
 
@@ -42,24 +35,33 @@ function AddCategoryModal({ onClose, onAdd }: { onClose: () => void; onAdd: (c: 
       "Кэшбэк": "🎁", "Бонус": "🏆", "Прочее": "📌",
     };
 
-    const existing = MOCK_CATEGORIES.find((c) => c.name.toLowerCase() === name.trim().toLowerCase());
     const colors = {
       expense: ["#f87171", "#fb923c", "#60a5fa", "#a78bfa", "#34d399", "#38bdf8", "#f472b6", "#fb923c"],
       income: ["#34d399", "#60a5fa", "#a78bfa", "#fbbf24", "#f472b6"],
     };
 
-    onAdd({
-      id: generateId(),
-      name: name.trim(),
-      icon: (tempIcon || existing?.icon) ?? icons[name.trim()] ?? "📌",
-      type,
-      color: colors[type][Math.floor(Math.random() * colors[type].length)],
-      limit: type === "expense" && limit ? Number(limit) : undefined,
-    });
-    onClose();
+    try {
+      const response = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          type,
+          color: colors[type][Math.floor(Math.random() * colors[type].length)],
+          limitAmount: type === "expense" && limit ? Number(limit) : null,
+        }),
+      });
+      const result = await response.json();
+      if (result.id) {
+        onAdd(result);
+        onClose();
+      }
+    } catch (error) {
+      console.error('Failed to add category:', error);
+    }
   };
 
-  const availableIcons = ["📌", "💰", "💻", "📈", "🎁", "🏆", "🍽️", "🏠", "🚗", "🎮", "💊", "✈️", "🛍️", "🎁", "📚", "🏥", "📦"];
+  const availableIcons = ["📌", "💰", "💻", "📈", "🎁", "🏆", "🍽️", "🏠", "🚗", "🎮", "💊", "✈️", "🛍️", "📚", "🏥", "📦"];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -156,27 +158,63 @@ function DeleteConfirmModal({ name, onClose, onConfirm }: { name: string; onClos
 
 /* ─── Main ─── */
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>(loadCategories);
+  const [categories, setCategories] = useState<DbCategory[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showIncome, setShowIncome] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
+  // Fetch categories from API
+  const fetchCategories = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/categories');
+      const result = await response.json();
+      if (Array.isArray(result)) {
+        setCategories(result);
+      }
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const handleAddFixed = (c: Category) => {
-    const next = [...categories, c];
-    setCategories(next);
-    saveCategories(next);
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  const handleAdd = async (c: DbCategory) => {
+    await fetchCategories();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteId) return;
-    const next = categories.filter((c) => c.id !== deleteId);
-    setCategories(next);
-    saveCategories(next);
-    setDeleteId(null);
+    try {
+      await fetch(`/api/categories?id=${deleteId}`, { method: 'DELETE' });
+      setDeleteId(null);
+      await fetchCategories();
+    } catch (error) {
+      console.error('Failed to delete category:', error);
+    }
   };
 
-  const allCategories = useMemo(() => [...MOCK_CATEGORIES, ...categories.filter((c) => !MOCK_CATEGORIES.find((m) => m.name === c.name))], [categories]);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm text-white/40">Загрузка категорий...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Combine mock (default) categories with user-created ones
+  const allCategories = useMemo(() => {
+    const userCategories = categories.filter((c) => !MOCK_CATEGORIES.find((m) => m.name === c.name));
+    return [...MOCK_CATEGORIES, ...userCategories];
+  }, [categories]);
 
   return (
     <div className="space-y-6">
@@ -204,8 +242,8 @@ export default function CategoriesPage() {
         {allCategories
           .filter((c) => (showIncome ? c.type === "income" : c.type === "expense"))
           .map((c, i) => (
-            <div key={c.id} className="relative group">
-              <CategoryCard category={c} delay={i * 0.05} spending={undefined} />
+            <div key={c.id || c.name} className="relative group">
+              <CategoryCard category={c as Category} delay={i * 0.05} spending={undefined} />
               {/* Delete button - only for user-added */}
               {!MOCK_CATEGORIES.find((m) => m.name === c.name) && (
                 <button
@@ -220,8 +258,8 @@ export default function CategoriesPage() {
       </div>
 
       {/* Modals */}
-      {showAdd && <AddCategoryModal onClose={() => setShowAdd(false)} onAdd={handleAddFixed} />}
-      {deleteId && (
+      {showAdd && <AddCategoryModal onClose={() => setShowAdd(false)} onAdd={handleAdd} />}
+      {deleteId !== null && (
         <DeleteConfirmModal
           name={categories.find((c) => c.id === deleteId)?.name ?? ""}
           onClose={() => setDeleteId(null)}

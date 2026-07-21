@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { doctors } from "@/data/medical";
@@ -8,6 +8,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { ArrowLeft, Calendar as CalIcon, Clock, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, User, FileText, MessageSquare, Phone, Mail, MapPin, Star } from "lucide-react";
+import { initMetrics, trackEvent } from "@shared-metrics/lib/metrics-client";
 
 interface BookingPageProps {
   params: Promise<{ id: string }>;
@@ -62,6 +63,19 @@ function BookingForm({ doctor }: { doctor: typeof doctors[0] }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // Initialize metrics and track consultation request on mount
+  useEffect(() => {
+    initMetrics({
+      projectId: "medicare",
+      endpoint: "/api/metrics",
+      debug: process.env.NODE_ENV === "development",
+    });
+    trackEvent("consultation_requested", {
+      doctorId: String(doctor.id),
+      specialty: doctor.specialty,
+    });
+  }, [doctor.id, doctor.specialty]);
+
   // Generate next 30 days
   const dates = useMemo(() => {
     const arr: Date[] = [];
@@ -82,6 +96,14 @@ function BookingForm({ doctor }: { doctor: typeof doctors[0] }) {
     await new Promise(resolve => setTimeout(resolve, 1000));
     setSuccess(true);
     setLoading(false);
+    // Track successful booking
+    trackEvent("doctor_booked", {
+      doctorId: String(doctor.id),
+      specialty: doctor.specialty,
+      date: selectedDate?.toISOString() || "",
+      time: selectedTime,
+      purpose: formData.purpose,
+    });
   };
 
   if (success) {

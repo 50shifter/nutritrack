@@ -32,6 +32,15 @@ function BookingContent() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
 
+  // Initialize metrics on mount
+  useEffect(() => {
+    initMetrics({
+      projectId: "luxstay",
+      endpoint: "/api/metrics",
+      debug: process.env.NODE_ENV === "development",
+    });
+  }, []);
+
   const filteredRooms = selectedHotel
     ? roomsByHotel[hotels[selectedHotel - 1].name]?.filter(
         (r) => r.available && r.maxGuests >= Number(guestsParam)
@@ -79,6 +88,17 @@ function BookingContent() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
+    // Track booking confirmed
+    if (selectedHotelData && selectedRoomData) {
+      trackEvent("booking_confirmed", {
+        hotelId: String(selectedHotel),
+        hotelName: selectedHotelData.name,
+        roomType: selectedRoomData.type,
+        totalPrice: String(totalPrice),
+        nights: String(totalNights),
+        city: selectedHotelData.city,
+      });
+    }
   };
 
   return (

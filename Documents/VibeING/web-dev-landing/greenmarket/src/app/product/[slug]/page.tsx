@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Star, ChevronLeft, ChevronRight, Heart, Plus, Minus, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -12,6 +12,7 @@ import { useCart } from "@/lib/context";
 import Image from "next/image";
 import { PageSkeleton } from "@/components/Skeleton";
 import type { Product } from "@/lib/types";
+import { initMetrics, trackEvent } from "@shared-metrics/lib/metrics-client";
 
 
 export { PageSkeleton as loading };
@@ -20,6 +21,23 @@ export default function ProductPage() {
   const params = useParams();
   const slug = params.slug as string;
   const product = PRODUCTS.find((p) => p.slug === slug);
+
+  // Track product view on mount
+  useEffect(() => {
+    if (product) {
+      initMetrics({
+        projectId: "greenmarket",
+        endpoint: "/api/metrics",
+        debug: process.env.NODE_ENV === "development",
+      });
+      trackEvent("product_viewed", {
+        productId: product.id,
+        name: product.name,
+        category: product.category,
+        price: String(product.price),
+      });
+    }
+  }, [product]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!product) {
     return (
@@ -40,6 +58,17 @@ function ProductContent({ product }: { product: Product }) {
   const [qty, setQty] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [wishlisted, setWishlisted] = useState(false);
+
+  // Track add to cart
+  const handleAddToCart = () => {
+    for (let i = 0; i < qty; i++) addToCart(product);
+    trackEvent("product_added_to_cart", {
+      productId: product.id,
+      name: product.name,
+      price: String(product.price),
+      qty: String(qty),
+    });
+  };
 
   const relatedProducts = PRODUCTS
     .filter((p) => p.category === product.category && p.id !== product.id)
@@ -152,7 +181,7 @@ function ProductContent({ product }: { product: Product }) {
                 </button>
               </div>
               <button
-                onClick={() => { for (let i = 0; i < qty; i++) addToCart(product); }}
+                onClick={handleAddToCart}
                 className="flex-1 py-3 rounded-xl bg-green text-white font-medium hover:bg-green/80 transition-colors active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-green/50"
                 aria-label={`Добавить ${product.name} в корзину`}
               >

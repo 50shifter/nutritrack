@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
+import { MetadataLayout } from "./_components/MetricsLayout";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
@@ -104,7 +105,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="min-h-full bg-dark-900">{children}</body>
+      <body className="min-h-full bg-dark-900">
+        <MetadataLayout>{children}</MetadataLayout>
+      </body>
     </html>
   );
 }

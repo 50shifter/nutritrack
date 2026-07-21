@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ToastProvider";
+import { MetadataLayout } from "./_components/MetricsLayout";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
@@ -39,7 +40,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ru" className={`${geistSans.variable}`}>
       <body className="min-h-full bg-dark-900">
-        <ToastProvider>{children}</ToastProvider>
+        <MetadataLayout>
+          <ToastProvider>{children}</ToastProvider>
+        </MetadataLayout>
       </body>
     </html>
   );

@@ -1,8 +1,3 @@
-/**
- * NutriTrack — Calorie Builder
- * FIX (M3): Использует единый MACRO_RATIOS из js/constants/macros.js
- */
-
 import { calculateBMR, calculateTDEE } from './bmi-calculator.js';
 import { MACRO_RATIOS, GOAL_MULTIPLIERS } from '../constants/macros.js';
 

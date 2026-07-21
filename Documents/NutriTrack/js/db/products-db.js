@@ -1,10 +1,5 @@
-/**
- * NutriTrack — Product Database (deduplicated)
- * FIX (C1): Удалены дубликаты продуктов
- */
 
 const products = [
-  // === MEAT (23) ===
   { id: 1, name: "Куриная грудка", category: "meat", calories: 113, protein: 23.6, fat: 1.9, carbs: 0.4, fiber: 0, water: 73, gi: 0, icon: "" },
   { id: 2, name: "Куриное бедро", category: "meat", calories: 145, protein: 20.9, fat: 6.4, carbs: 0, fiber: 0, water: 72, gi: 0, icon: "" },
   { id: 3, name: "Куриная голень", category: "meat", calories: 150, protein: 21.5, fat: 6.2, carbs: 0, fiber: 0, water: 71, gi: 0, icon: "" },
@@ -29,7 +24,6 @@ const products = [
   { id: 22, name: "Котлета мясная", category: "meat", calories: 263, protein: 14.4, fat: 20.6, carbs: 6.5, fiber: 0.5, water: 57, gi: 0, icon: "" },
   { id: 23, name: "Пельмени", category: "meat", calories: 275, protein: 11.9, fat: 12.4, carbs: 29.1, fiber: 1.3, water: 45, gi: 0, icon: "" },
 
-  // === FISH (20) ===
   { id: 24, name: "Лосось", category: "fish", calories: 208, protein: 20.4, fat: 13.6, carbs: 0, fiber: 0, water: 64, gi: 0, icon: "" },
   { id: 25, name: "Форель", category: "fish", calories: 140, protein: 21.8, fat: 5.5, carbs: 0, fiber: 0, water: 72, gi: 0, icon: "" },
   { id: 26, name: "Тунец свежий", category: "fish", calories: 101, protein: 23.3, fat: 0.7, carbs: 0, fiber: 0, water: 76, gi: 0, icon: "" },
@@ -51,7 +45,6 @@ const products = [
   { id: 42, name: "Сайра консервы", category: "fish", calories: 184, protein: 17.9, fat: 11.9, carbs: 0, fiber: 0, water: 68, gi: 0, icon: "" },
   { id: 43, name: "Сардина", category: "fish", calories: 143, protein: 19.6, fat: 6.3, carbs: 0, fiber: 0, water: 73, gi: 0, icon: "" },
 
-  // === DAIRY (29) ===
   { id: 44, name: "Молоко 3.2%", category: "dairy", calories: 58, protein: 2.9, fat: 3.2, carbs: 4.8, fiber: 0, water: 88, gi: 0, icon: "" },
   { id: 45, name: "Молоко 1.5%", category: "dairy", calories: 43, protein: 3, fat: 1.5, carbs: 4.8, fiber: 0, water: 90, gi: 0, icon: "" },
   { id: 46, name: "Молоко 0.5%", category: "dairy", calories: 34, protein: 3, fat: 0.5, carbs: 4.8, fiber: 0, water: 91, gi: 0, icon: "" },
@@ -82,7 +75,6 @@ const products = [
   { id: 71, name: "Сыворотка творожная", category: "dairy", calories: 22, protein: 1, fat: 0.5, carbs: 3.8, fiber: 0, water: 94, gi: 0, icon: "" },
   { id: 72, name: "Сгущённое молоко", category: "dairy", calories: 320, protein: 7.2, fat: 8.5, carbs: 56, fiber: 0, water: 30, gi: 0, icon: "" },
 
-  // === EGGS (6) ===
   { id: 73, name: "Яйцо куриное (белок)", category: "eggs", calories: 44, protein: 11, fat: 0.2, carbs: 0.7, fiber: 0, water: 87, gi: 0, icon: "" },
   { id: 74, name: "Яйцо куриное (желток)", category: "eggs", calories: 352, protein: 16, fat: 32, carbs: 0.6, fiber: 0, water: 50, gi: 0, icon: "" },
   { id: 75, name: "Яйцо перепелиное", category: "eggs", calories: 168, protein: 11.9, fat: 13.1, carbs: 0.6, fiber: 0, water: 73, gi: 0, icon: "" },
@@ -90,7 +82,6 @@ const products = [
   { id: 77, name: "Яичница-глазунья", category: "eggs", calories: 196, protein: 13.6, fat: 15, carbs: 0.6, fiber: 0, water: 70, gi: 0, icon: "" },
   { id: 78, name: "Омлет из 2 яиц", category: "eggs", calories: 153, protein: 10.6, fat: 11, carbs: 1.2, fiber: 0, water: 75, gi: 0, icon: "" },
 
-  // === GRAINS (37) ===
   { id: 79, name: "Рис белый (сухой)", category: "grains", calories: 344, protein: 7, fat: 0.7, carbs: 78.9, fiber: 0.8, water: 12, gi: 65, icon: "" },
   { id: 80, name: "Рис белый варёный", category: "grains", calories: 130, protein: 2.7, fat: 0.3, carbs: 28, fiber: 0.4, water: 68, gi: 65, icon: "" },
   { id: 81, name: "Рис бурый (сухой)", category: "grains", calories: 340, protein: 7.3, fat: 2.4, carbs: 72.8, fiber: 4.9, water: 15, gi: 65, icon: "" },
@@ -129,7 +120,6 @@ const products = [
   { id: 114, name: "Овсяные хлопья", category: "grains", calories: 342, protein: 12.3, fat: 6.1, carbs: 60.3, fiber: 10, water: 9, gi: 55, icon: "" },
   { id: 115, name: "Мюсли", category: "grains", calories: 373, protein: 11.1, fat: 7.1, carbs: 68.8, fiber: 8.3, water: 7, gi: 65, icon: "" },
 
-  // === VEGETABLES (32) ===
   { id: 116, name: "Картофель (варёный)", category: "vegetables", calories: 82, protein: 2, fat: 0.4, carbs: 16.8, fiber: 1.5, water: 80, gi: 25, icon: "" },
   { id: 117, name: "Картофель (жареный)", category: "vegetables", calories: 192, protein: 2.4, fat: 10.4, carbs: 23.3, fiber: 1.8, water: 63, gi: 25, icon: "" },
   { id: 118, name: "Картофельное пюре", category: "vegetables", calories: 85, protein: 2.1, fat: 3.1, carbs: 11.6, fiber: 1.1, water: 82, gi: 75, icon: "" },
@@ -163,7 +153,6 @@ const products = [
   { id: 146, name: "Шампиньоны", category: "vegetables", calories: 27, protein: 4.3, fat: 1, carbs: 0.8, fiber: 3.5, water: 91, gi: 25, icon: "" },
   { id: 147, name: "Грибы белые", category: "vegetables", calories: 19, protein: 3.7, fat: 1.7, carbs: 1.1, fiber: 2.4, water: 90, gi: 25, icon: "" },
 
-  // === FRUITS (25) ===
   { id: 148, name: "Яблоко", category: "fruits", calories: 47, protein: 0.3, fat: 0.3, carbs: 9.8, fiber: 2.6, water: 86, gi: 35, icon: "" },
   { id: 149, name: "Груша", category: "fruits", calories: 57, protein: 0.4, fat: 0.3, carbs: 11.8, fiber: 3.1, water: 84, gi: 38, icon: "" },
   { id: 150, name: "Банан", category: "fruits", calories: 89, protein: 1.1, fat: 0.3, carbs: 23.5, fiber: 2.3, water: 75, gi: 60, icon: "" },
@@ -190,7 +179,6 @@ const products = [
   { id: 171, name: "Цукини (фрукт)", category: "fruits", calories: 17, protein: 1.2, fat: 0.3, carbs: 3.1, fiber: 1, water: 94, gi: 50, icon: "" },
   { id: 172, name: "Личи", category: "fruits", calories: 66, protein: 0.8, fat: 0.4, carbs: 15, fiber: 1.3, water: 82, gi: 50, icon: "" },
 
-  // === BERRIES (14) ===
   { id: 173, name: "Клубника", category: "berries", calories: 41, protein: 0.7, fat: 0.4, carbs: 7.5, fiber: 2.5, water: 91, gi: 32, icon: "" },
   { id: 174, name: "Малина", category: "berries", calories: 46, protein: 0.8, fat: 0.5, carbs: 8.3, fiber: 6.5, water: 86, gi: 30, icon: "" },
   { id: 175, name: "Смородина чёрная", category: "berries", calories: 44, protein: 1.4, fat: 0.4, carbs: 7.3, fiber: 4.3, water: 87, gi: 35, icon: "" },
@@ -206,7 +194,6 @@ const products = [
   { id: 185, name: "Облепиха", category: "berries", calories: 82, protein: 1.2, fat: 6.4, carbs: 5.7, fiber: 4.7, water: 82, gi: 35, icon: "" },
   { id: 186, name: "Виноградная ягода", category: "berries", calories: 69, protein: 0.6, fat: 0.4, carbs: 16.8, fiber: 0.9, water: 81, gi: 35, icon: "" },
 
-  // === NUTS (15) ===
   { id: 187, name: "Грецкий орех", category: "nuts", calories: 654, protein: 15.2, fat: 65.2, carbs: 13.7, fiber: 6.5, water: 4, gi: 0, icon: "" },
   { id: 188, name: "Миндаль", category: "nuts", calories: 579, protein: 21.2, fat: 49.9, carbs: 21.6, fiber: 12.5, water: 4, gi: 0, icon: "" },
   { id: 189, name: "Фундук", category: "nuts", calories: 628, protein: 15, fat: 60.8, carbs: 16.7, fiber: 9.2, water: 4, gi: 0, icon: "" },
@@ -223,7 +210,6 @@ const products = [
   { id: 200, name: "Семена льна", category: "nuts", calories: 534, protein: 18.3, fat: 42.2, carbs: 1.6, fiber: 34.4, water: 6, gi: 0, icon: "" },
   { id: 201, name: "Арахисовая паста", category: "nuts", calories: 594, protein: 25, fat: 50, carbs: 20, fiber: 6, water: 3, gi: 0, icon: "" },
 
-  // === LEGUMES (12) ===
   { id: 202, name: "Фасоль белая (сухая)", category: "legumes", calories: 333, protein: 23.5, fat: 0.7, carbs: 59.8, fiber: 15.7, water: 9, gi: 30, icon: "" },
   { id: 203, name: "Фасоль белая (варёная)", category: "legumes", calories: 126, protein: 8.7, fat: 0.5, carbs: 22.8, fiber: 6.7, water: 67, gi: 30, icon: "" },
   { id: 204, name: "Фасоль красная (сухая)", category: "legumes", calories: 333, protein: 22.5, fat: 1.7, carbs: 59.8, fiber: 15.8, water: 9, gi: 30, icon: "" },
@@ -237,7 +223,6 @@ const products = [
   { id: 212, name: "Тофу", category: "legumes", calories: 76, protein: 8.1, fat: 4.8, carbs: 1.9, fiber: 0.7, water: 85, gi: 30, icon: "" },
   { id: 213, name: "Эдамаме", category: "legumes", calories: 121, protein: 11.9, fat: 5.2, carbs: 8.9, fiber: 4.1, water: 64, gi: 30, icon: "" },
 
-  // === OILS (8) ===
   { id: 214, name: "Масло оливковое extra virgin", category: "oils", calories: 898, protein: 0, fat: 99.9, carbs: 0, fiber: 0, water: 0, gi: 0, icon: "" },
   { id: 215, name: "Масло подсолнечное", category: "oils", calories: 899, protein: 0, fat: 99.9, carbs: 0, fiber: 0, water: 0, gi: 0, icon: "" },
   { id: 216, name: "Масло кокосовое", category: "oils", calories: 892, protein: 0, fat: 99.9, carbs: 0, fiber: 0, water: 0, gi: 0, icon: "" },
@@ -247,7 +232,6 @@ const products = [
   { id: 220, name: "Смалец", category: "oils", calories: 801, protein: 0.8, fat: 89.5, carbs: 0, fiber: 0, water: 9, gi: 0, icon: "" },
   { id: 221, name: "Топлёное масло (гхи)", category: "oils", calories: 900, protein: 0.3, fat: 99.8, carbs: 0.1, fiber: 0, water: 0.1, gi: 0, icon: "" },
 
-  // === DRINKS (16) ===
   { id: 222, name: "Чай чёрный без сахара", category: "drinks", calories: 1, protein: 0, fat: 0, carbs: 0.2, fiber: 0, water: 99, gi: 45, icon: "" },
   { id: 223, name: "Чай зелёный без сахара", category: "drinks", calories: 1, protein: 0, fat: 0, carbs: 0.1, fiber: 0, water: 99, gi: 45, icon: "" },
   { id: 224, name: "Кофе без молока и сахара", category: "drinks", calories: 2, protein: 0.1, fat: 0.2, carbs: 0, fiber: 0, water: 99, gi: 45, icon: "" },
@@ -265,7 +249,6 @@ const products = [
   { id: 236, name: "Квас хлебный", category: "drinks", calories: 27, protein: 0.1, fat: 0, carbs: 5.9, fiber: 0.3, water: 93, gi: 45, icon: "" },
   { id: 237, name: "Кокосовое молоко", category: "drinks", calories: 52, protein: 0.6, fat: 3.1, carbs: 4.3, fiber: 2.3, water: 90, gi: 45, icon: "" },
 
-  // === SWEETS (14) ===
   { id: 238, name: "Сахар белый", category: "sweets", calories: 399, protein: 0, fat: 0, carbs: 99.7, fiber: 0, water: 0.1, gi: 70, icon: "" },
   { id: 239, name: "Мёд", category: "sweets", calories: 329, protein: 0.3, fat: 0, carbs: 81.5, fiber: 0.2, water: 17, gi: 87, icon: "" },
   { id: 240, name: "Шоколад молочный", category: "sweets", calories: 535, protein: 7.5, fat: 30.5, carbs: 58, fiber: 3.3, water: 1, gi: 70, icon: "" },
@@ -281,7 +264,6 @@ const products = [
   { id: 250, name: "Халва подсолнечная", category: "sweets", calories: 523, protein: 11.6, fat: 29.7, carbs: 51.9, fiber: 5.9, water: 6, gi: 70, icon: "" },
   { id: 251, name: "Лакомка (конфеты)", category: "sweets", calories: 443, protein: 7, fat: 21, carbs: 56, fiber: 1.3, water: 5, gi: 70, icon: "" },
 
-  // === EXTRA READY MEALS ===
   { id: 252, name: "Овсяная каша готовая", category: "grains", calories: 52, protein: 1.5, fat: 1.0, carbs: 10.0, fiber: 1.2, water: 87, gi: 65, icon: "" },
   { id: 253, name: "Гречневая каша готовая", category: "grains", calories: 92, protein: 3.7, fat: 1.0, carbs: 17.6, fiber: 2.5, water: 77, gi: 65, icon: "" },
   { id: 254, name: "Рисовая каша готовая", category: "grains", calories: 61, protein: 1.5, fat: 0.8, carbs: 12.0, fiber: 0.3, water: 85, gi: 65, icon: "" },

@@ -1,8 +1,3 @@
-/**
- * NutriTrack — Nutrition Facts
- * FIX (C3): Не создаёт глобальных переменных
- */
-
 const nutrientData = [
   {
     id: 'vitA', name: 'Витамин A', brief: 'Здоровье глаз, кожи и иммунитета',

@@ -1,14 +1,3 @@
-/**
- * NutriTrack — BMI Calculator
- */
-
-/**
- * Mifflin-St Jeor BMR formula
- * @param {number} weight - kg
- * @param {number} height - cm
- * @param {number} age - years
- * @param {'male'|'female'} sex
- */
 export function calculateBMR(weight, height, age, sex) {
   if (sex === 'female') {
     return 10 * weight + 6.25 * height - 5 * age - 161;
@@ -16,9 +5,6 @@ export function calculateBMR(weight, height, age, sex) {
   return 10 * weight + 6.25 * height - 5 * age + 5;
 }
 
-/**
- * TDEE = BMR × activity multiplier
- */
 export function calculateTDEE(bmr, activityLevel) {
   const multipliers = {
     sedentary: 1.2,
@@ -30,20 +16,11 @@ export function calculateTDEE(bmr, activityLevel) {
   return bmr * (multipliers[activityLevel] || 1.2);
 }
 
-/**
- * Calculate BMI
- * @param {number} weight - kg
- * @param {number} height - cm
- */
 export function calculateBMI(weight, height) {
   const heightM = height / 100;
   return weight / (heightM * heightM);
 }
 
-/**
- * @param {number} bmi
- * @returns {{ label: string; advice: string; color: string }}
- */
 export function getBMICategory(bmi) {
   if (bmi < 16) return {
     label: 'Выраженный дефицит массы',
@@ -72,9 +49,6 @@ export function getBMICategory(bmi) {
   };
 }
 
-/**
- * Ideal weight range
- */
 export function getIdealWeightRange(height) {
   const minBMI = 18.5;
   const maxBMI = 24.9;
@@ -85,9 +59,6 @@ export function getIdealWeightRange(height) {
   };
 }
 
-/**
- * Weight difference from ideal
- */
 export function getWeightDifference(weight, height) {
   const midBMI = 21.7;
   const ideal = midBMI * (height / 100) * (height / 100);

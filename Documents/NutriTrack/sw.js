@@ -1,8 +1,3 @@
-/**
- * NutriTrack — Service Worker для PWA
- * Стратегия: Cache-First для статики, Network-First для динамических данных
- */
-
 const CACHE_NAME = 'nutritrack-v1';
 const STATIC_ASSETS = [
   '/',
@@ -37,7 +32,7 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Статика (CSS, JS): Cache First
+  
   if (['/css/', '/js/'].some((p) => url.pathname.startsWith(p))) {
     event.respondWith(
       caches.match(request).then((cached) => {
@@ -56,7 +51,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Главная страница: Network First
+  
   if (request.destination === 'document') {
     event.respondWith(
       fetch(request)
@@ -70,13 +65,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Всё остальное: Cache First
+  
   event.respondWith(
     caches.match(request).then((cached) => cached || fetch(request).catch(() => cached))
   );
 });
 
-// Регистрация Service Worker
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
     .then((reg) => console.log('✅ SW зарегистрирован', reg.scope))

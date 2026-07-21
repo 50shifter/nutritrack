@@ -1,8 +1,3 @@
-/**
- * NutriTrack — Константы (единый источник)
- * FIX (M3): Единый источник macro ratios и activity modes
- */
-
 export const MACRO_RATIOS = {
   maintain: { protein: 30, fat: 30, carbs: 40, label: 'Поддержание' },
   lose:     { protein: 35, fat: 30, carbs: 35, label: 'Похудение' },

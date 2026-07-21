@@ -1,8 +1,3 @@
-/**
- * NutriTrack — localStorage Storage Module
- * All app data persisted here (profile, daily log, cookies)
- */
-
 function lsGet(key, fallback = null) {
   try {
     const val = localStorage.getItem(key);

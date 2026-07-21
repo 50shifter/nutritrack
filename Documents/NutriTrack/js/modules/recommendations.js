@@ -1,7 +1,3 @@
-/**
- * NutriTrack — Recommendations Engine
- */
-
 export function getMealTiming() {
   return [
     { time: '7:00–9:00', meal: 'Завтрак', calories: '25–30%', desc: 'Белки + сложные углеводы + клетчатка. Пример: овсянка + яйца + салат' },

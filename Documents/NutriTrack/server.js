@@ -1,8 +1,3 @@
-/**
- * NutriTrack — Simple static file server
- * Запускает локальный сервер для разработки
- */
-
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -10,7 +5,6 @@ const path = require('path');
 const PORT = process.env.PORT || 8080;
 const ROOT_DIR = path.join(__dirname, 'dist');
 
-// MIME types
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -52,7 +46,7 @@ function sendFile(res, filePath) {
 const server = http.createServer((req, res) => {
   let url = req.url;
 
-  // SPA routing: if not a file, serve index.html
+
   const filePath = path.join(ROOT_DIR, url === '/' ? 'index.html' : url);
 
   if (!filePath.startsWith(ROOT_DIR)) {
@@ -63,7 +57,7 @@ const server = http.createServer((req, res) => {
 
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
-      // SPA fallback
+
       sendFile(res, path.join(ROOT_DIR, 'index.html'));
       return;
     }
@@ -79,7 +73,6 @@ server.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}\n`);
 });
 
-// Graceful shutdown
 process.on('SIGINT', () => {
   console.log('\nShutting down...');
   server.close(() => process.exit(0));

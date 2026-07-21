@@ -1,22 +1,15 @@
-/**
- * NutriTrack — Main Application
- * FIX (C3): Не используем window.* — вместо этого Module Pattern
- */
-
 import storage from './modules/storage.js';
 import { buildCalories } from './modules/calorie-builder.js';
+import { getMealTiming, getGeneralTips, getPreWorkoutNutrition, getHydrationRecommendation } from './modules/recommendations.js';
+import { searchProducts, findProduct, calculateNutrients, sumNutrients, products, categories } from './db/products-db.js';
+import { resolveAlias } from './db/product-aliases.js';
 
-// --- Helpers ---
 function escapeHTML(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
 }
-import { getMealTiming, getGeneralTips, getPreWorkoutNutrition, getHydrationRecommendation } from './modules/recommendations.js';
-import { searchProducts, findProduct, calculateNutrients, sumNutrients, products, categories } from './db/products-db.js';
-import { resolveAlias } from './db/product-aliases.js';
 
-// --- State ---
 const state = {
   currentPage: 'dashboard',
   profile: storage.lsGet('nt_profile', {}),
@@ -24,23 +17,18 @@ const state = {
   activeMeal: 'breakfast',
 };
 
-// --- DOM Helpers ---
 const $ = (sel, parent = document) => parent.querySelector(sel);
 const $$ = (sel, parent = document) => [...parent.querySelectorAll(sel)];
 
-// --- Navigation ---
 function navigate(page, updateHash = true) {
-  // Hide all sections
+function navigate(page, updateHash = true) {
   $$('.app-section').forEach(s => s.classList.remove('active'));
-  // Show target
   const target = $(`.app-section[data-page="${page}"]`);
   if (target) {
     target.classList.add('active');
     state.currentPage = page;
     if (updateHash) history.pushState({ page }, '', `#${page}`);
-    // Update nav active state
     $$('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.page === page));
-    // Call page-specific init
     if (page === 'dashboard') initDashboard();
     else if (page === 'calculator') initCalculator();
     else if (page === 'food-log') initFoodLog();
@@ -51,7 +39,6 @@ function navigate(page, updateHash = true) {
   }
 }
 
-// --- Toast Notifications (instead of alert) ---
 const TOAST_COLORS = { info: '#2196F3', success: '#4CAF50', warning: '#FF9800', error: '#F44336' };
 const TOAST_ICONS = { info: 'fa-info-circle', success: 'fa-check-circle', warning: 'fa-exclamation-triangle', error: 'fa-times-circle' };
 
@@ -92,7 +79,6 @@ function showToast(message, type = 'info') {
   }, 3000);
 }
 
-// --- Dashboard ---
 function initDashboard() {
   const today = new Date().toISOString().split('T')[0];
   const todayLog = state.dailyLog[today] || {};
@@ -112,7 +98,6 @@ function initDashboard() {
   const targets = { cal: 2000, protein: 150, fat: 67, carbs: 250 };
   const pct = (val, max) => Math.min(100, Math.round((val / max) * 100));
 
-  // Update dashboard cards
   const calEl = $('#dash-calories');
   if (calEl) {
     calEl.textContent = `${totalCal}/${targets.cal}`;
@@ -139,7 +124,6 @@ function initDashboard() {
   }
 }
 
-// --- Calculator ---
 function initCalculator() {
   const form = $('#bmi-calculator-form');
   if (!form) return;
@@ -160,7 +144,6 @@ function initCalculator() {
 
     const result = buildCalories(weight, height, age, sex, activity, goal);
 
-    // Display results
     $('#result-bmr').textContent = result.bmr;
     $('#result-tdee').textContent = result.tdee;
     $('#result-calories').textContent = result.calories;
@@ -168,13 +151,11 @@ function initCalculator() {
     $('#result-fat').textContent = `${result.fat}г`;
     $('#result-carbs').textContent = `${result.carbs}г`;
 
-    // Show results section
     const results = $('#cal-results');
     if (results) results.style.display = 'block';
   });
 }
 
-// --- Food Log ---
 function initFoodLog() {
   const today = new Date().toISOString().split('T')[0];
   const todayLog = state.dailyLog[today] || {};
@@ -218,7 +199,6 @@ function renderMealTab() {
     `).join('');
   }
 
-  // Calculate totals
   const totals = sumNutrients(mealItems);
   const totalEl = $('#meal-totals');
   if (totalEl) {
@@ -235,7 +215,6 @@ function renderMealTab() {
     `;
   }
 
-  // Add event listeners
   container.querySelectorAll('.remove-item-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const idx = parseInt(btn.dataset.index);
@@ -329,7 +308,6 @@ function getMealTypeName(meal) {
   return names[meal] || meal;
 }
 
-// --- Shared Search Dropdown ---
 function createSearchDropdown(inputEl, dropdownEl, { maxResults = 20, showCategory = true } = {}) {
   if (!inputEl || !dropdownEl) return;
 
@@ -382,7 +360,6 @@ function initFoodSearch() {
   createSearchDropdown($('#food-search-input'), $('#food-search-results'), { maxResults: 10, showCategory: false });
 }
 
-// --- BMI ---
 function initBMI() {
   const form = $('#bmi-form');
   if (!form) return;
@@ -427,9 +404,7 @@ function initBMI() {
   });
 }
 
-// --- Recommendations ---
 function initRecommendations() {
-  // Meal timing
   const timingContainer = $('#meal-timing-list');
   if (timingContainer) {
     const timing = getMealTiming();
@@ -444,7 +419,6 @@ function initRecommendations() {
     `).join('');
   }
 
-  // General tips
   const tipsContainer = $('#general-tips-list');
   if (tipsContainer) {
     const tips = getGeneralTips();
@@ -459,7 +433,6 @@ function initRecommendations() {
     `).join('');
   }
 
-  // Pre/post workout
   const pw = getPreWorkoutNutrition();
   const pwSection = $('#pre-workout-section');
   if (pwSection) {
@@ -478,7 +451,6 @@ function initRecommendations() {
     `;
   }
 
-  // Hydration
   const hydrateContainer = $('#hydration-info');
   if (hydrateContainer) {
     const weight = state.profile?.weight || 70;
@@ -494,7 +466,6 @@ function initRecommendations() {
   }
 }
 
-// --- Nutrition Facts ---
 function initNutritionFacts() {
   const container = $('#nutrition-list');
   if (!container) return;
@@ -524,7 +495,6 @@ function initNutritionFacts() {
     </div>
   `).join('');
 
-  // Toggle expand/collapse
   container.querySelectorAll('.nutrient-header').forEach(header => {
     header.addEventListener('click', () => {
       const detail = header.nextElementSibling.nextElementSibling;
@@ -535,12 +505,10 @@ function initNutritionFacts() {
   });
 }
 
-// --- Profile ---
 function initProfile() {
   const form = $('#profile-form');
   if (!form) return;
 
-  // Fill current profile
   if (state.profile) {
     $('#prof-name').value = state.profile.name || '';
     $('#prof-weight').value = state.profile.weight || '';
@@ -563,7 +531,6 @@ function initProfile() {
   });
 }
 
-// --- Cookie Banner ---
 function initCookieBanner() {
   const banner = $('.cookie-banner');
   if (!banner || storage.lsGet('nt_cookies_accepted')) return;
@@ -577,7 +544,6 @@ function initCookieBanner() {
   }
 }
 
-// --- Mobile Menu ---
 function initMobileMenu() {
   const toggle = $('.menu-toggle');
   const nav = $('.nav');
@@ -588,7 +554,6 @@ function initMobileMenu() {
   }
 }
 
-// --- CSS Animations (injected) ---
 function injectAnimations() {
   const style = document.createElement('style');
   style.textContent = `
@@ -604,7 +569,6 @@ function injectAnimations() {
   document.head.appendChild(style);
 }
 
-// --- Init ---
 function init() {
   injectAnimations();
   initMobileMenu();
@@ -613,7 +577,6 @@ function init() {
   initProfile();
   initCookieBanner();
 
-  // Handle hash navigation
   const hash = window.location.hash?.slice(1);
   if (hash && ['dashboard', 'calculator', 'food-log', 'bmi', 'recommendations', 'nutrition-facts'].includes(hash)) {
     navigate(hash, false);
@@ -621,27 +584,23 @@ function init() {
     navigate('dashboard');
   }
 
-  // Listen for hash changes
   window.addEventListener('hashchange', () => {
     const page = window.location.hash?.slice(1);
     if (page) navigate(page);
   });
 
-  // Nav links
   $$('.nav-link').forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const page = link.dataset.page;
       if (page) {
         navigate(page);
-        // Close mobile menu
         const nav = $('.nav');
         if (nav) nav.classList.remove('open');
       }
     });
   });
 
-  // Meal tabs
   $$('.meal-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       switchMeal(tab.dataset.meal);
@@ -649,7 +608,6 @@ function init() {
   });
 }
 
-// Start when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {

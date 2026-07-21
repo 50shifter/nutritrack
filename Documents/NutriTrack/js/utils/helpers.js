@@ -1,8 +1,3 @@
-/**
- * NutriTrack — Utility Functions
- * FIX (M1): Удалены неиспользуемые функции
- */
-
 export function formatNumber(num, decimals = 1) {
   return Number(num).toFixed(decimals);
 }

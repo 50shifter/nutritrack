@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="NutriTrack — трекер питания, калькулятор ИМТ и калорий">
+  <meta name="theme-color" content="#4CAF50">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>NutriTrack — Трекер питания</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥗</text></svg>">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-content">
+      <a href="#dashboard" class="logo" data-page="dashboard">
+        <i class="fas fa-leaf"></i>
+        <span>NutriTrack</span>
+      </a>
+      <div class="header-actions">
+        <button class="btn-icon" id="theme-toggle" title="Сменить тему">
+          <i class="fas fa-moon"></i>
+        </button>
+        <button class="menu-toggle" id="menu-toggle">
+          <i class="fas fa-bars"></i>
+        </button>
+        <a href="#calculator" class="btn btn-secondary">Калькулятор</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="nav" id="main-nav">
+    <ul class="nav-list">
+      <li><a href="#dashboard" class="nav-link active" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> Дашборд</a></li>
+      <li><a href="#calculator" class="nav-link" data-page="calculator"><i class="fas fa-calculator"></i> Калькулятор</a></li>
+      <li><a href="#food-log" class="nav-link" data-page="food-log"><i class="fas fa-utensils"></i> Дневник питания</a></li>
+      <li><a href="#bmi" class="nav-link" data-page="bmi"><i class="fas fa-weight"></i> ИМТ</a></li>
+      <li><a href="#recommendations" class="nav-link" data-page="recommendations"><i class="fas fa-heart"></i> Рекомендации</a></li>
+      <li><a href="#nutrition-facts" class="nav-link" data-page="nutrition-facts"><i class="fas fa-info-circle"></i> О нутриентах</a></li>
+      <li><a href="#profile" class="nav-link" data-page="profile"><i class="fas fa-user"></i> Профиль</a></li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <main>
+    <!-- Dashboard Section -->
+    <section class="app-section active" data-page="dashboard">
+      <h2 class="section-title"><i class="fas fa-tachometer-alt"></i> Дашборд</h2>
+
+      <div class="profile-summary" id="profile-summary">
+        <div class="profile-avatar"><i class="fas fa-user"></i></div>
+        <div class="profile-info">
+          <span id="profile-name">Гость</span>
+          <small class="text-muted">Отслеживайте своё питание</small>
+        </div>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-icon"><i class="fas fa-fire"></i></div>
+          <div class="summary-value" id="dash-calories">0/2000</div>
+          <div class="summary-label">Калории</div>
+          <div class="summary-bar"><div class="progress-bar" id="dash-cal-bar" style="width: 0%"></div></div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon"><i class="fas fa-drumstick-bite"></i></div>
+          <div class="summary-value" id="dash-protein">0/150г</div>
+          <div class="summary-label">Белки</div>
+          <div class="summary-bar"><div class="progress-bar" id="dash-prot-bar" style="width: 0%"></div></div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon"><i class="fas fa-cheese"></i></div>
+          <div class="summary-value" id="dash-fat">0/67г</div>
+          <div class="summary-label">Жиры</div>
+          <div class="summary-bar"><div class="progress-bar" id="dash-fat-bar" style="width: 0%"></div></div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon"><i class="fas fa-bread-slice"></i></div>
+          <div class="summary-value" id="dash-carbs">0/250г</div>
+          <div class="summary-label">Углеводы</div>
+          <div class="summary-bar"><div class="progress-bar" id="dash-carbs-bar" style="width: 0%"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="mb-2">Быстрый поиск</h3>
+        <div class="search-input">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" class="form-control" id="product-search" placeholder="Найти продукт...">
+          <div class="search-results-dropdown" id="search-results"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Calculator Section -->
+    <section class="app-section" data-page="calculator">
+      <h2 class="section-title"><i class="fas fa-calculator"></i> Калькулятор калорий</h2>
+
+      <div class="card">
+        <form id="bmi-calculator-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cal-weight">Вес (кг)</label>
+              <input type="number" class="form-control" id="cal-weight" placeholder="70" required>
+            </div>
+            <div class="form-group">
+              <label for="cal-height">Рост (см)</label>
+              <input type="number" class="form-control" id="cal-height" placeholder="175" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cal-age">Возраст</label>
+              <input type="number" class="form-control" id="cal-age" placeholder="30" required>
+            </div>
+            <div class="form-group">
+              <label for="cal-sex">Пол</label>
+              <select class="form-control" id="cal-sex">
+                <option value="male">Мужской</option>
+                <option value="female">Женский</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="cal-activity">Уровень активности</label>
+            <select class="form-control" id="cal-activity">
+              <option value="sedentary">Сидячий образ жизни</option>
+              <option value="light">Лёгкая активность (1-3 раза/нед)</option>
+              <option value="moderate" selected>Умеренная (3-5 раз/нед)</option>
+              <option value="active">Высокая (6-7 раз/нед)</option>
+              <option value="veryActive">Спортсмены (2 тренировки/день)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="cal-goal">Цель</label>
+            <select class="form-control" id="cal-goal">
+              <option value="lose">Похудение (-15%)</option>
+              <option value="maintain" selected>Поддержание</option>
+              <option value="gain">Набор массы (+10%)</option>
+              <option value="cut">Сушка (-20%, высокий белок)</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-calculator"></i> Рассчитать</button>
+        </form>
+
+        <div id="cal-results" style="display: none;" class="mt-3">
+          <div class="card" style="background: var(--accent-light); border: 2px solid var(--accent-color);">
+            <h3>Результаты</h3>
+            <div class="grid-2 mt-2">
+              <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-fire"></i></div>
+                <div class="stat-value" id="result-calories">2000</div>
+                <div class="stat-label">Калории для цели</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-heartbeat"></i></div>
+                <div class="stat-value" id="result-bmr">1500</div>
+                <div class="stat-label">Базовый обмен (BMR)</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-running"></i></div>
+                <div class="stat-value" id="result-tdee">2000</div>
+                <div class="stat-label">Поддержание (TDEE)</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-bullseye"></i></div>
+                <div class="stat-value" id="result-goal">Поддержание</div>
+                <div class="stat-label" id="result-goal-desc">Без изменений</div>
+              </div>
+            </div>
+            <div class="macro-grid mt-2">
+              <div class="macro-card">
+                <div class="macro-value" id="result-protein">150г</div>
+                <div class="macro-label">Белки</div>
+                <div class="macro-sub">30%</div>
+              </div>
+              <div class="macro-card">
+                <div class="macro-value" id="result-fat">67г</div>
+                <div class="macro-label">Жиры</div>
+                <div class="macro-sub">30%</div>
+              </div>
+              <div class="macro-card">
+                <div class="macro-value" id="result-carbs">250г</div>
+                <div class="macro-label">Углеводы</div>
+                <div class="macro-sub">40%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Food Log Section -->
+    <section class="app-section" data-page="food-log">
+      <h2 class="section-title"><i class="fas fa-utensils"></i> Дневник питания</h2>
+
+      <div class="search-input mb-2">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" class="form-control" id="food-search-input" placeholder="Добавить продукт...">
+        <div class="search-results-dropdown" id="food-search-results"></div>
+      </div>
+
+      <div class="meal-tabs">
+        <button class="meal-tab active" data-meal="breakfast"><i class="fas fa-sun"></i> Завтрак</button>
+        <button class="meal-tab" data-meal="lunch"><i class="fas fa-cloud-sun"></i> Обед</button>
+        <button class="meal-tab" data-meal="dinner"><i class="fas fa-moon"></i> Ужин</button>
+        <button class="meal-tab" data-meal="snack"><i class="fas fa-cookie-bite"></i> Перекус</button>
+      </div>
+
+      <div class="card">
+        <div id="meal-items-list" class="meal-items-list">
+          <div class="empty-state">
+            <i class="fas fa-utensils"></i>
+            <p>Добавьте продукты</p>
+          </div>
+        </div>
+
+        <div id="meal-totals" class="meal-totals">
+          <div class="total-row">
+            <span>Всего за приём:</span>
+            <span><strong>0</strong> ккал</span>
+          </div>
+          <div class="total-row macros">
+            <span>Белки: <strong>0г</strong></span>
+            <span>Жиры: <strong>0г</strong></span>
+            <span>Углеводы: <strong>0г</strong></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BMI Section -->
+    <section class="app-section" data-page="bmi">
+      <h2 class="section-title"><i class="fas fa-weight"></i> Индекс массы тела (ИМТ)</h2>
+
+      <div class="card">
+        <form id="bmi-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="bmi-weight">Вес (кг)</label>
+              <input type="number" class="form-control" id="bmi-weight" placeholder="70" required>
+            </div>
+            <div class="form-group">
+              <label for="bmi-height">Рост (см)</label>
+              <input type="number" class="form-control" id="bmi-height" placeholder="175" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-calculator"></i> Рассчитать ИМТ</button>
+        </form>
+
+        <div id="bmi-result" class="mt-3"></div>
+      </div>
+
+      <div class="card mt-2">
+        <h3>Шкала ИМТ</h3>
+        <div class="bmi-segment-bar mt-2">
+          <div style="width: 14.3%; background: #e91e63;" title="Выраженный дефицит"></div>
+          <div style="width: 14.3%; background: #f39c12;" title="Дефицит"></div>
+          <div style="width: 30%; background: #4caf50;" title="Норма"></div>
+          <div style="width: 20%; background: #ff9800;" title="Избыточный вес"></div>
+          <div style="width: 21.4%; background: #f44336;" title="Ожирение"></div>
+        </div>
+        <div class="grid-5 mt-1 text-center">
+          <small>&lt;16</small>
+          <small>16–18.5</small>
+          <small>18.5–25</small>
+          <small>25–30</small>
+          <small>&gt;30</small>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recommendations Section -->
+    <section class="app-section" data-page="recommendations">
+      <h2 class="section-title"><i class="fas fa-heart"></i> Рекомендации</h2>
+
+      <div class="info-collapsible">
+        <button class="info-collapsible-header">
+          <i class="fas fa-clock"></i>
+          <h3>Режим питания</h3>
+          <i class="fas fa-chevron-down toggle-icon"></i>
+        </button>
+        <div class="info-collapsible-detail" id="meal-timing-list"></div>
+      </div>
+
+      <div class="info-collapsible">
+        <button class="info-collapsible-header">
+          <i class="fas fa-lightbulb"></i>
+          <h3>Общие советы</h3>
+          <i class="fas fa-chevron-down toggle-icon"></i>
+        </button>
+        <div class="info-collapsible-detail" id="general-tips-list"></div>
+      </div>
+
+      <div class="info-collapsible">
+        <button class="info-collapsible-header">
+          <i class="fas fa-dumbbell"></i>
+          <h3>Питание вокруг тренировок</h3>
+          <i class="fas fa-chevron-down toggle-icon"></i>
+        </button>
+        <div class="info-collapsible-detail" id="pre-workout-section"></div>
+      </div>
+
+      <div class="info-collapsible">
+        <button class="info-collapsible-header">
+          <i class="fas fa-droplet"></i>
+          <h3>Гидратация</h3>
+          <i class="fas fa-chevron-down toggle-icon"></i>
+        </button>
+        <div class="info-collapsible-detail" id="hydration-info"></div>
+      </div>
+    </section>
+
+    <!-- Nutrition Facts Section -->
+    <section class="app-section" data-page="nutrition-facts">
+      <h2 class="section-title"><i class="fas fa-info-circle"></i> О нутриентах</h2>
+
+      <div class="search-input mb-2">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" class="form-control" id="nutrient-search" placeholder="Поиск нутриентов...">
+      </div>
+
+      <div id="nutrition-list"></div>
+    </section>
+
+    <!-- Profile Section -->
+    <section class="app-section" data-page="profile">
+      <h2 class="section-title"><i class="fas fa-user"></i> Профиль</h2>
+
+      <div class="card">
+        <form id="profile-form">
+          <div class="form-group">
+            <label for="prof-name">Имя</label>
+            <input type="text" class="form-control" id="prof-name" placeholder="Ваше имя">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prof-weight">Вес (кг)</label>
+              <input type="number" class="form-control" id="prof-weight" placeholder="70">
+            </div>
+            <div class="form-group">
+              <label for="prof-height">Рост (см)</label>
+              <input type="number" class="form-control" id="prof-height" placeholder="175">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prof-age">Возраст</label>
+              <input type="number" class="form-control" id="prof-age" placeholder="30">
+            </div>
+            <div class="form-group">
+              <label for="prof-sex">Пол</label>
+              <select class="form-control" id="prof-sex">
+                <option value="male">Мужской</option>
+                <option value="female">Женский</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Сохранить</button>
+        </form>
+
+        <div class="mt-2">
+          <button class="btn btn-secondary" id="clear-data-btn" style="width: 100%;"><i class="fas fa-trash"></i> Очистить все данные</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <p>&copy; 2025 NutriTrack — Трекер питания</p>
+  </footer>
+
+  <!-- Cookie Banner -->
+  <div class="cookie-banner" style="display: none;">
+    <div class="cookie-banner-content">
+      <div class="cookie-banner-text">
+        <i class="fas fa-cookie-bite"></i>
+        <span>Мы используем cookies для улучшения вашего опыта</span>
+      </div>
+      <div class="cookie-banner-actions">
+        <button class="btn btn-primary btn-sm btn-accept-cookies">Принять</button>
+        <button class="btn btn-secondary btn-sm">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container"></div>
+
+  <!-- App Module -->
+  <script type="module" src="js/app.js"></script>
+
+  <!-- Theme Toggle -->
+  <script>
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+      localStorage.setItem('nt_theme', html.getAttribute('data-theme'));
+    });
+
+    // Restore theme
+    const savedTheme = localStorage.getItem('nt_theme');
+    if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+    // Clear data button
+    document.getElementById('clear-data-btn')?.addEventListener('click', () => {
+      if (confirm('Вы уверены? Все данные будут удалены.')) {
+        localStorage.removeItem('nt_profile');
+        localStorage.removeItem('nt_daily_log');
+        localStorage.removeItem('nt_cookies_accepted');
+        location.reload();
+      }
+    });
+  </script>
+</body>
+</html>

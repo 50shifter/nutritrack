@@ -1,0 +1,29 @@
+{
+  "name": "nutritrack",
+  "version": "1.0.0",
+  "description": "NutriTrack — Умный счётчик калорий. Отслеживание питания, расчёт ИМТ/BMR/TDEE, диетологические рекомендации.",
+  "homepage": "https://github.com/50shifter/nutritrack",
+  "scripts": {
+    "start": "node server.js",
+    "build": "npm run clean && npm run copy-assets",
+    "clean": "node clean-dist.js",
+    "copy-assets": "node copy-assets.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "nutrition",
+    "tracker",
+    "calories",
+    "bmi",
+    "tdee",
+    "health",
+    "spa",
+    "pwa"
+  ],
+  "author": "50shifter",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/50shifter/nutritrack.git"
+  }
+}
